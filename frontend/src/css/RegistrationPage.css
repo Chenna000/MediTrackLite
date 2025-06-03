@@ -1,0 +1,78 @@
+/* RegisterPage.css */
+.register-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  width: 100vw;
+  background: linear-gradient(135deg, #e0f2ff, #cce8ff);
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.register-card {
+  background-color: white;
+  padding: 30px 40px;
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(0, 100, 200, 0.1);
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+
+.register-card h2 {
+  margin-bottom: 20px;
+  color: #0077cc;
+}
+
+.register-card input,
+.register-card select {
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+  border: 1px solid #0077cc;
+  border-radius: 6px;
+  outline: none;
+  transition: 0.2s;
+}
+
+.register-card input:focus,
+.register-card select:focus {
+  border-color: #005999;
+  box-shadow: 0 0 5px rgba(0, 119, 204, 0.3);
+}
+
+.register-card button {
+  background-color: #0077cc;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  margin-top: 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s ease;
+}
+
+.register-card button:hover {
+  background-color: #005999;
+}
+
+.register-card p {
+  margin-top: 15px;
+  font-size: 14px;
+}
+
+.register-card a {
+  color: #0077cc;
+  text-decoration: none;
+}
+
+.register-card .error {
+  color: red;
+  font-size: 14px;
+}
+
+.register-card .success {
+  color: green;
+  font-size: 14px;
+}
