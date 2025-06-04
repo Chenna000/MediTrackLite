@@ -132,7 +132,6 @@ public class AuthService {
 
 	public Profile getuserProfile(HttpServletRequest request) {
 		HttpSession session = request.getSession(false);
-		//System.out.println("In Profile service");
 		if(session==null||session.getAttribute("user")==null) {
 			throw new RuntimeException("User Not Found");
 		}
