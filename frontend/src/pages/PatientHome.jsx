@@ -15,7 +15,7 @@ const PatientHome = () => {
   const [success, setSuccess] = useState('');
   let timeout;
 
-  // ✅ Fetch user info securely using session cookie
+  //  Fetch user info securely using session cookie
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -36,7 +36,7 @@ const PatientHome = () => {
     fetchUser();
   }, [navigate]);
 
-  // ✅ Auto logout after 5 minutes of inactivity
+  //  Auto logout after 5 minutes of inactivity
   const resetInactivityTimer = () => {
     clearTimeout(timeout);
     timeout = setTimeout(() => {
@@ -62,7 +62,7 @@ const PatientHome = () => {
     };
   }, []);
 
-  // ✅ Logout (manual or auto)
+  // Handle logout
   const handleLogout = async (auto = false) => {
     try {
       await axios.post('http://localhost:8080/api/auth/logout', {}, {
@@ -76,7 +76,7 @@ const PatientHome = () => {
     }
   };
 
-  // ✅ Password change
+  // Handle change password
   const handleChangePassword = async (e) => {
     e.preventDefault();
     setError('');

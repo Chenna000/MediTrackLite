@@ -10,7 +10,7 @@ const DoctorHome = () => {
   const [profileError, setProfileError] = useState('');
   const [showProfile, setShowProfile] = useState(false);
 
-  // Password change modal states
+
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -45,7 +45,7 @@ const DoctorHome = () => {
   const resetInactivityTimer = () => {
     clearTimeout(timeout);
     timeout = setTimeout(() => {
-      handleLogout(true); // Auto logout
+      handleLogout(true); // Auto logout after 5 minutes of inactivity
     }, 5 * 60 * 1000);
   };
 

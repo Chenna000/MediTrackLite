@@ -35,7 +35,7 @@ const RegisterPage = () => {
     }
   };
 
- return (
+return (
   <div className="register-page">
     <div className="register-card">
       <h2>MediTrack Registration</h2>

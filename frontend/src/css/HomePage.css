@@ -1,4 +1,4 @@
-/* General Styles */
+
 body {
   margin: 0;
   padding: 0;
@@ -23,7 +23,7 @@ body {
   position: relative;
 }
 
-/* Navbar Styles */
+
 .navbar-custom {
   background: linear-gradient(135deg, #1e5799, #2989d8);
   padding: 12px 0;
@@ -58,7 +58,7 @@ body {
   transform: scale(1.05);
 }
 
-/* Hero Quote Section */
+
 .quote {
   text-align: center;
   padding: 100px 20px 50px;
@@ -80,7 +80,7 @@ body {
   line-height: 1.6;
 }
 
-/* Card container */
+
 .card-container {
   display: flex;
   justify-content: center;
@@ -90,19 +90,8 @@ body {
   max-width: 1000px;
 }
 
-/* .info-card {
-  background: rgba(255, 255, 255, 0.96);
-  border-radius: 10px;
-  color: #333;
-  width: 280px;
-  padding: 20px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  text-align: center;
-  animation: fadeInUp 1s ease forwards;
-  opacity: 0;
-  border-top: 4px solid #52ab98;
-} */
- .info-card {
+
+.info-card {
   background: #ffffff;
   border-radius: 12px;
   padding: 30px;
@@ -147,7 +136,7 @@ body {
   }
 }
 
-/* Footer sections */
+
 .footer-section {
   background-color: rgba(0, 0, 0, 0.7);
   padding: 40px 20px;
@@ -159,7 +148,7 @@ body {
   font-size: 1.5rem;
 }
 
-/* Social Footer */
+
 .social-footer {
   background-color: #2b6777;
   padding: 20px 0;
@@ -176,7 +165,7 @@ body {
   color: #f2f2f2;
 }
 
-/* Button styling */
+
 .btn {
   padding: 12px 32px;
   border-radius: 30px;
@@ -204,7 +193,7 @@ body {
 }
 
 
-/* Responsive adjustments */
+
 @media (max-width: 768px) {
   .quote {
     font-size: 1.2rem;

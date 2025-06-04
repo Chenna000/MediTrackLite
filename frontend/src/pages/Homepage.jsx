@@ -9,7 +9,7 @@ const HomePage = () => {
 
   return (
     <div className="home-container">
-      {/* Navbar */}
+      
       <nav className="navbar navbar-expand-lg navbar-dark navbar-custom fixed-top">
         <div className="container-fluid">
           <a className="navbar-brand" href="#">
@@ -31,7 +31,6 @@ const HomePage = () => {
         </div>
       </nav>
 
-      {/* Main Quote Section */}
       <div className="quote">
         <h2>"Empowering healthcare with technology – fast, secure, and reliable!"</h2>
         <p className="mt-3">Your health in your hands, simplified for everyone</p>
@@ -47,10 +46,7 @@ const HomePage = () => {
           <h5>For Doctors</h5>
           <p>Instant access to patient data, secure login, and efficient workflow management. Spend more time with patients, less with paperwork.</p>
         </div>
-        {/* <div className="info-card">
-          <h5>Simple Interface</h5>
-          <p>User-friendly UI tailored for everyone – from rural patients to tech-savvy professionals. Available in multiple languages.</p>
-        </div> */}
+        
       </div>
 
       {/* About Us */}
