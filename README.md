@@ -45,7 +45,7 @@ This project was built using **React (Vite)** for the frontend and **Spring Boot
 
 1. Open the backend folder in Eclipse
 2. Run the Spring Boot application
-3. It will start on: "http://localhost:8080"
+3. It will start on: "http://localhost:8087"
 
 ### Frontend (React + Vite)
 
