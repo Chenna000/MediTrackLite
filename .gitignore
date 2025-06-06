@@ -1,0 +1,67 @@
+# === GENERAL LOG FILES ===
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# === NODE.JS / REACT (FRONTEND) ===
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/*.local
+frontend/.env
+
+# === SPRING BOOT / JAVA (BACKEND) ===
+backend/target/
+backend/.env
+backend/.mvn/wrapper/maven-wrapper.jar
+
+# Exclude nested build/target folders except source ones
+!**/src/main/**/build/
+!**/src/test/**/build/
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# === Eclipse IDE ===
+.backend/.classpath
+backend/.project
+backend/.settings/
+backend/.factorypath
+backend/.apt_generated
+backend/.springBeans
+
+# === Spring Tool Suite (STS) ===
+backend/.sts4-cache
+
+# === IntelliJ IDEA ===
+backend/.idea/
+backend/*.iws
+backend/*.iml
+backend/*.ipr
+
+# === NetBeans ===
+backend/nbproject/private/
+backend/nbbuild/
+backend/dist/
+backend/nbdist/
+backend/.nb-gradle/
+backend/build/
+
+# === EDITOR FOLDERS ===
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# === OS FILES ===
+.DS_Store
+Thumbs.db
+Icon?
+Desktop.ini
