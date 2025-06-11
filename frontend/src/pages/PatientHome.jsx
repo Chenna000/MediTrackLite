@@ -3,109 +3,166 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import './../css/PatientHome.css';
 
+
+const API = axios.create({
+  baseURL: 'http://localhost:8080',
+  withCredentials: true,
+});
+
 const PatientHome = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [appointments, setAppointments] = useState([]);
+  const [date, setDate] = useState('');
+  const [doctors, setDoctors] = useState([]);
+  const [slots, setSlots] = useState([]);
+  const [bookForm, setBookForm] = useState({
+    doctorEmail: '',
+    doctorName: '',
+    slot: '',
+    phoneNo: '',
+    problemDescription: '',
+  });
+  const [bookMsg, setBookMsg] = useState('');
+
+  // Profile & Password modal state
   const [showProfile, setShowProfile] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
+  const [profile, setProfile] = useState(null);
+  const [profileError, setProfileError] = useState('');
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [passwordError, setError] = useState('');
+  const [passwordSuccess, setSuccess] = useState('');
+
   let timeout;
 
-  //  Fetch user info securely using session cookie
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await axios.get('http://localhost:8080/api/auth/me', {
-          withCredentials: true
-        });
-        if (res.data.role !== 'PATIENT') {
-          navigate('/login');
-        } else {
-          setUser(res.data);
-        }
-      } catch (err) {
-        console.error('User session invalid or expired', err);
-        navigate('/login');
-      }
-    };
-
-    fetchUser();
-  }, [navigate]);
-
-  //  Auto logout after 5 minutes of inactivity
-  const resetInactivityTimer = () => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => {
-      handleLogout(true);
-    }, 5 * 60 * 1000);
+  // Fetch logged-in user details
+  const fetchUser = async () => {
+    try {
+      const res = await API.get('/api/auth/me', {withCredentials: true});
+      if (res.data.role !== 'PATIENT')  navigate('/login');
+      setUser(res.data);
+      //document.title = `MediTrack - ${res.data.name}`;
+      fetchAppointments(res.data.email);
+    } catch (err) {
+      console.error('User session invalid or expired', err);
+      navigate('/login');
+    }
   };
 
+  const fetchAppointments = async (email) => {
+    try {
+      const res = await API.get('/appointments/patient', {
+        params: { email },
+      });
+      const sorted = res.data.sort(
+        (a, b) => new Date(b.appointmentDate) - new Date(a.appointmentDate)
+      );
+      setAppointments(sorted);
+    } catch (err) {
+      console.error('Failed to fetch appointments', err);
+    }
+  };
+
+  // Doctor and slot fetching
   useEffect(() => {
-    window.addEventListener('mousemove', resetInactivityTimer);
-    window.addEventListener('keydown', resetInactivityTimer);
-    window.addEventListener('click', resetInactivityTimer);
-    resetInactivityTimer();
+    if (!date) return setDoctors([]);
+    API.get('/appointments/available-doctors', { params: { date } })
+      .then((res) => setDoctors(res.data))
+      .catch(() => setDoctors([]));
+  }, [date]);
+
+  useEffect(() => {
+    if (!date || !bookForm.doctorEmail) return setSlots([]);
+    API.get('/appointments/available-slots', {
+      params: { date, doctorEmail: bookForm.doctorEmail },
+    })
+      .then((res) => setSlots(res.data))
+      .catch(() => setSlots([]));
+  }, [date, bookForm.doctorEmail]);
+
+  // Booking handler
+  const handleBook = async (e) => {
+    e.preventDefault();
+    setBookMsg('');
+    const { doctorEmail, doctorName, slot, phoneNo, problemDescription } = bookForm;
+    if (!date || !doctorEmail || !slot || !problemDescription.trim()) {
+      setBookMsg('All fields are required.');
+      return;
+    }
+
+    try {
+      const res = await API.post('/appointments', {
+        doctorEmail,
+        doctorName,
+        slot,
+        phoneNo,
+        problemDescription,
+        appointmentDate: date,
+        patientEmail: user.email,
+      });
+      setBookMsg(res.data);
+      fetchAppointments(user.email);
+      setDate('');
+      setBookForm({ doctorEmail: '', doctorName: '', slot: '', phoneNo: '', problemDescription: '' });
+    } catch (err) {
+      setBookMsg(err.response?.data || 'Something went wrong. Please try again.');
+    }
+  };
+
+  // Inactivity logout & back prevention
+  useEffect(() => {
+    fetchUser();
+
+    const resetTimer = () => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        handleLogout(true);
+        alert('Logged out due to inactivity.');
+      }, 5 * 60 * 1000);
+    };
+
+    window.addEventListener('mousemove', resetTimer);
+    window.addEventListener('keydown', resetTimer);
+    window.addEventListener('click', resetTimer);
+    resetTimer();
 
     window.history.pushState(null, '', window.location.href);
     window.onpopstate = () => window.history.go(1);
 
     return () => {
-      window.removeEventListener('mousemove', resetInactivityTimer);
-      window.removeEventListener('keydown', resetInactivityTimer);
-      window.removeEventListener('click', resetInactivityTimer);
+      
+      window.removeEventListener('mousemove', resetTimer);
+      window.removeEventListener('keydown', resetTimer);
+      window.removeEventListener('click', resetTimer);
       clearTimeout(timeout);
       window.onpopstate = null;
     };
   }, []);
 
-  // Handle logout
   const handleLogout = async (auto = false) => {
     try {
-      await axios.post('http://localhost:8080/api/auth/logout', {}, {
-        withCredentials: true
-      });
-    } catch (err) {
-      console.error('Logout failed:', err);
+      await API.post('/api/auth/logout');
+    } catch (e) {
+      console.error('Logout failed');
     } finally {
       if (auto) alert('Session expired due to inactivity');
       navigate('/login');
     }
   };
 
-  // Handle change password
-  const handleChangePassword = async (e) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
-
-    if (!oldPassword || !newPassword || !confirmNewPassword) {
-      setError('All fields are required.');
-      return;
-    }
-    if (newPassword !== confirmNewPassword) {
-      setError('New passwords do not match.');
-      return;
-    }
-
+  const handleProfileClick = async () => {
+    setShowProfile(true);
     try {
-      await axios.post('http://localhost:8080/api/auth/change-password', {
-        oldPassword,
-        newPassword
-      }, { withCredentials: true });
-
-      setSuccess('Password changed successfully');
-      handleCloseChangePassword();
-      navigate('/login');
+      const res = await API.get('/api/auth/profile');
+      setProfile(res.data);
     } catch (err) {
-      setError(err.response?.data || 'Failed to change password');
+      setProfileError('Failed to fetch profile');
     }
   };
 
-  const handleCloseProfile = () => setShowProfile(false);
   const handleOpenChangePassword = () => {
     setShowChangePassword(true);
     setError('');
@@ -114,95 +171,237 @@ const PatientHome = () => {
     setNewPassword('');
     setConfirmNewPassword('');
   };
+
+   // Password change handler
+  const handleChangePassword = async (e) => {
+  e.preventDefault();
+  setError('');
+  setSuccess('');
+
+  if (!oldPassword || !newPassword || !confirmNewPassword) {
+    setError('All fields are required.');
+    return;
+  }
+
+  if (newPassword !== confirmNewPassword) {
+    setError('New passwords do not match.');
+    return;
+  }
+
+  try {
+    const res = await axios.post(
+      'http://localhost:8080/api/auth/change-password',
+      { oldPassword, newPassword },
+      { withCredentials: true }
+    );
+
+    setSuccess('Password changed successfully. Redirecting to login...');
+
+    // Optional delay so user sees the message
+    setTimeout(() => {
+      handleCloseChangePassword();
+      navigate('/login');
+    }, 2000);
+  } catch (err) {
+    console.error('Password change error:', err);
+
+    if (err.response?.data?.message) {
+      setError(err.response.data.message);
+    } else if (typeof err.response?.data === 'string') {
+      setError(err.response.data);
+    } else {
+      setError('Failed to change password');
+    }
+  }
+};
+
+
   const handleCloseChangePassword = () => setShowChangePassword(false);
 
-  return (
-    <div className="patient-container">
-      <div className="patient-card">
-        <h2>Welcome, Patient</h2>
-        <p><strong>Email:</strong> {user?.email}</p>
-        <button className="logout-btn" onClick={() => handleLogout(false)}>Logout</button>
-        <button className="profile-btn" onClick={() => setShowProfile(true)} style={{ marginLeft: '10px' }}>
-          👤 Profile
-        </button>
-        <button className="change-password-btn" onClick={handleOpenChangePassword} style={{ marginLeft: '10px',marginTop: '10px' }}>
-          Change Password
-        </button>
+
+   return (
+    <div>
+      {/* Navbar */}
+      <div className="navbar">
+        <div className="navbar-title">Welcome - Mr. {user?.name}</div>
+        <div className="navbar-buttons">
+          <button onClick={handleProfileClick}>Profile</button>
+          <button onClick={handleOpenChangePassword}>Change Password</button>
+          <button onClick={() => handleLogout(false)}>Logout</button>
+        </div>
       </div>
 
+      {/* Main Layout */}
+      <div className="patient-container">
+        {/* Left: Booking Section */}
+        <div className="booking-section">
+          <h2>Book Appointment</h2>
+          <form onSubmit={handleBook} className="booking-form">
+            <div className="form-row">
+              <label>Date:</label>
+              <input
+                type="date"
+                value={date}
+                min={new Date().toISOString().split('T')[0]}
+                max={new Date(Date.now() + 6 * 86400000).toISOString().split('T')[0]}
+                onChange={(e) => setDate(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="form-row">
+              <label>Doctor:</label>
+              <select
+                value={
+                  bookForm.doctorEmail && bookForm.doctorName
+                    ? `${bookForm.doctorEmail}|${bookForm.doctorName}`
+                    : ''
+                }
+                onChange={(e) => {
+                  const [email, name] = e.target.value.split('|');
+                  setBookForm((prev) => ({
+                    ...prev,
+                    doctorEmail: email,
+                    doctorName: name,
+                    slot: '',
+                  }));
+                }}
+                required
+              >
+                <option value="">Select Doctor</option>
+                {doctors.map((docEmail) => {
+                  const name = docEmail.split('@')[0];
+                  return (
+                    <option key={docEmail} value={`${docEmail}|${name}`}>
+                      {name.charAt(0).toUpperCase() + name.slice(1)}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+
+            <div className="form-row">
+              <label>Slot:</label>
+              <select
+                value={bookForm.slot}
+                onChange={(e) => setBookForm((prev) => ({ ...prev, slot: e.target.value }))}
+                required
+              >
+                <option value="">Select Slot</option>
+                {slots.map((slot) => (
+                  <option key={slot}>{slot}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-row">
+              <label>Phone No:</label>
+              <input
+                type="tel"
+                value={bookForm.phoneNo}
+                onChange={(e) => setBookForm((prev) => ({ ...prev, phoneNo: e.target.value }))}
+                pattern="[0-9]{10}"
+                placeholder="Enter 10-digit phone number"
+                required
+              />
+            </div>
+
+            <div className="form-row">
+              <label>Problem Description:</label>
+              <textarea
+                maxLength={200}
+                value={bookForm.problemDescription}
+                onChange={(e) => setBookForm((prev) => ({ ...prev, problemDescription: e.target.value }))}
+                required
+              />
+            </div>
+
+            <button type="submit">Book</button>
+          </form>
+          {bookMsg && (
+            <p className={bookMsg.toLowerCase().includes('success') || bookMsg.toLowerCase().includes('booked') ? 'modal-success' : 'modal-error'}>
+              {bookMsg}
+            </p>
+          )}
+        </div>
+
+        {/* Right: Appointments Section */}
+        <div className="appointments-section">
+          <h3>My Appointments</h3>
+          {appointments.length === 0 ? (
+            <p>No appointments yet.</p>
+          ) : (
+            <ul className="appointment-list">
+              {[...appointments]
+    .sort((a, b) => {
+      const dateTimeA = new Date(`${a.appointmentDate} ${a.slot}`);
+      const dateTimeB = new Date(`${b.appointmentDate} ${b.slot}`);
+      return dateTimeB - dateTimeA;
+    })
+    .map((appt) => (
+      <li key={appt.id} className="appointment-card">
+        <p><strong>Date:</strong> {appt.appointmentDate}</p>
+        <p><strong>Time:</strong> {appt.slot}</p>
+        <p><strong>Doctor:</strong> {appt.doctorName}</p>
+        <p><strong>Status:</strong> {appt.status}</p>
+        {appt.status !== '' && (
+          <button onClick={() => navigate(`/print/${appt.id}`)}>Print</button>
+        )}
+      </li>
+    ))}
+            </ul>
+          )}
+        </div>
+      </div>
+
+      {/* Profile Modal */}
       {showProfile && (
         <div className="profile-modal">
           <div className="profile-content">
-            <button onClick={handleCloseProfile} style={{ float: 'right' }}>X</button>
+            <button onClick={() => setShowProfile(false)} style={{ float: 'right' }}>X</button>
             <h3>Profile</h3>
-            {user ? (
+            {profileError && <p style={{ color: 'red' }}>{profileError}</p>}
+            {profile && (
               <>
-                <p><strong>Name:</strong> {user.name}</p>
-                <p><strong>Email:</strong> {user.email}</p>
-                <p><strong>Role:</strong> {user.role}</p>
+                <p><strong>Name:</strong> {profile.name}</p>
+                <p><strong>Email:</strong> {profile.email}</p>
+                <p><strong>Role:</strong> {profile.role}</p>
               </>
-            ) : (
-              <p>Loading profile...</p>
             )}
           </div>
         </div>
       )}
 
+      {/* Change Password Modal */}
       {showChangePassword && (
-  <div className="modal-overlay" onClick={handleCloseChangePassword}>
-    <div className="modal-container" onClick={e => e.stopPropagation()}>
-      <button className="modal-close-btn" onClick={handleCloseChangePassword} aria-label="Close">
-        &times;
-      </button>
-      <h3>Change Password</h3>
+        <div className="modal-overlay" onClick={() => setShowChangePassword(false)}>
+          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close-btn" onClick={() => setShowChangePassword(false)}>&times;</button>
+            <h3>Change Password</h3>
+            {passwordError && <p className="modal-error">{passwordError}</p>}
+            {passwordSuccess && <p className="modal-success">{passwordSuccess}</p>}
 
-      {error && <p className="modal-error">{error}</p>}
-      {success && <p className="modal-success">{success}</p>}
-
-      <form onSubmit={handleChangePassword} className="modal-form">
-        <label>
-          Old Password
-          <input
-            type="password"
-            placeholder="Enter old password"
-            value={oldPassword}
-            onChange={(e) => setOldPassword(e.target.value)}
-            required
-          />
-        </label>
-
-        <label>
-          New Password
-          <input
-            type="password"
-            placeholder="Enter new password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            required
-          />
-        </label>
-
-        <label>
-          Confirm New Password
-          <input
-            type="password"
-            placeholder="Confirm new password"
-            value={confirmNewPassword}
-            onChange={(e) => setConfirmNewPassword(e.target.value)}
-            required
-          />
-        </label>
-
-        <button type="submit" className="modal-submit-btn">
-          Change Password
-        </button>
-      </form>
-    </div>
-  </div>
-)}
-
+            <form onSubmit={handleChangePassword} className="modal-form">
+              <label>
+                Old Password
+                <input type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} required />
+              </label>
+              <label>
+                New Password
+                <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required />
+              </label>
+              <label>
+                Confirm New Password
+                <input type="password" value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} required />
+              </label>
+              <button type="submit" className="modal-submit-btn">Change Password</button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
+
 };
 
 export default PatientHome;

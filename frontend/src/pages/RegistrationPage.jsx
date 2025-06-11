@@ -7,6 +7,7 @@ const RegisterPage = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState('PATIENT');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -29,6 +30,7 @@ const RegisterPage = () => {
       setSuccess(res.data);
       setError('');
       setTimeout(() => navigate('/login'), 2000); // Redirect to login after success
+    
     } catch (err) {
       setError(err.response?.data || 'Registration failed');
       setSuccess('');
@@ -67,6 +69,17 @@ return (
         onPaste={e => e.preventDefault()}
         onCut={e => e.preventDefault()}
       />
+      
+      
+      {/* <input
+        placeholder=" Confirm Password"
+        type="password"
+        value={password}
+        onChange={e => setConfirmPassword(e.target.value)}
+        onCopy={e => e.preventDefault()}
+        onPaste={e => e.preventDefault()}
+        onCut={e => e.preventDefault()}
+      /> */}
       <select
         value={role}
         onChange={e => setRole(e.target.value)}

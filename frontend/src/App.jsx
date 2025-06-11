@@ -4,6 +4,7 @@ import DoctorHome from './pages/DoctorHome';
 import PatientHome from './pages/PatientHome';
 import RegisterPage from './pages/RegistrationPage';
 import HomePage from './pages/Homepage';
+import PrintAppointment from './pages/PrintAppointment';
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/doctor" element={<DoctorHome />} />
       <Route path="/patient" element={<PatientHome />} />
+      <Route path="/print/:id" element={<PrintAppointment />} />
     </Routes>
   );
 }
