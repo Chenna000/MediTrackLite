@@ -32,21 +32,39 @@ This project was built using **React (Vite)** for the frontend and **Spring Boot
 - Change password and profile view functionality
 - Password strength constraints & session protection
 
-### 🩺 Patient Portal
-- Book appointments by choosing date, doctor, and available slot
+### 🩺 Patient Module
+- Book appointments by selecting specialization, doctor, date, and slot
 - Add phone number and problem description (max 200 chars)
 - View booked appointments in reverse chronological order
 - Print appointment confirmation
+- See prescription after appointment is completed
 
-### 👨‍⚕️ Doctor Portal
+### 👨‍⚕️ Doctor Module
 - View appointments split into **Pending** and **Accepted**
 - Accept or Reject pending appointments
 - Print accepted appointment details
+- Add prescriptions after appointment is in progress
+- Mark appointment status: `IN_PROGRESS` → `COMPLETED`
 
-### 🕐 Scheduler
+### 💊 Prescription Management
+- Add multiple medicines per appointment
+- Each medicine has:
+  - Name
+  - Dosage instructions
+  - Frequency
+- Prescriptions are linked to completed appointments
+- Patients can view and print them
+
+### 🕐Smart Schedulers
 - Auto-rejects pending appointments after:
   - 30 minutes (if appointment is scheduled soon)
   - 12 hours (for general cleanup)
+- Auto-update ACCEPTED appointments to IN_PROGRESS when slot time starts
+
+### 🔒 Security Highlights
+- Passwords stored with BCrypt hashing
+- Session-aware protected endpoints
+- Prevents unauthorized access via role-based filters
 
 ##  Project Structure
 - MediTrackLite/
@@ -77,6 +95,8 @@ This project was built using **React (Vite)** for the frontend and **Spring Boot
 - POST `/appointments/book` – Book appointment
 - GET `/appointments/doctor/pending` – Fetch doctor’s pending appointments
 - PUT `/appointments/{id}/status` – Accept/Reject appointment
+- POST `/prescriptions/upload` - Adds Prescription Details
+- GET `/prescriptions/{appointmentId}` - Returns Prescription details based on appointmentId
 
  ## Future Enhancements
 - Integreate Real time notifications to mobile number
