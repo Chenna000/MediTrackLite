@@ -7,11 +7,12 @@ import lombok.*;
 @Table(name="users")
 public class User {
 	public User() {}
-	 public User(String name, String email, String password, String role) {
+	 public User(String name, String email, String password, String role, String specialization) {
 		this.name = name;
 		this.email = email;
 		this.password = password;
 		this.role = role;
+		this.specialization = specialization;
 	}
 
 	 	@Id
@@ -26,6 +27,17 @@ public class User {
 	    private String password;
 
 	    private String role; // "PATIENT" or "DOCTOR"
+	    
+	    private String specialization;
+	    
+	    public String getSpecialization() {
+			return specialization;
+		}
+		public void setSpecialization(String specialization) {
+			this.specialization = specialization;
+		}
+
+		
 
 		public Long getId() {
 			return id;

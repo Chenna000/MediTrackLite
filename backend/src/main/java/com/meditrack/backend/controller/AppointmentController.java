@@ -2,6 +2,7 @@ package com.meditrack.backend.controller;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -71,5 +72,20 @@ public class AppointmentController {
     @GetMapping("/doctor/accepted")
     public List<Appointment> getAcceptedAppointments(@RequestParam String email) {
         return appointmentService.getDoctorAppointmentsByStatus(email, "ACCEPTED");
+    }
+    
+    @GetMapping("/specializations")
+    public ResponseEntity<List<String>> getAllSpecializations() {
+        List<String> specs = appointmentService.getAllSpecializations();
+        return ResponseEntity.ok(specs);
+    }
+
+    @GetMapping("/doctorsdata")
+    public ResponseEntity<List<Map<String, String>>> getDoctorsBySpecialization(
+            @RequestParam String specialization,
+            @RequestParam String date) {
+        
+        List<Map<String, String>> availableDoctors = appointmentService.getAvailableDoctorsBySpecialization(specialization, LocalDate.parse(date));
+        return ResponseEntity.ok(availableDoctors);
     }
 }

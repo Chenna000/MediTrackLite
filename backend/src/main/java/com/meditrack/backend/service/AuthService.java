@@ -50,7 +50,7 @@ public class AuthService {
         }
 
         String hashedPassword = passwordEncoder.encode(request.getPassword());
-        User user = new User(request.getName(), request.getEmail(), hashedPassword, request.getRole());
+        User user = new User(request.getName(), request.getEmail(), hashedPassword, request.getRole(), request.getSpecialization());
         userRepo.save(user);
         return ResponseEntity.ok("Registration Successful");
     }

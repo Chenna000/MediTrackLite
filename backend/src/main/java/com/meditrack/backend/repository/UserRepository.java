@@ -16,5 +16,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
 	List<User> findByRole(String role);
 	 @Query("SELECT u.email FROM User u WHERE u.role = 'DOCTOR'")
 	    List<String> findEmailsByRole(@Param("role") String role);
+	 
+	 @Query("SELECT DISTINCT u.specialization FROM User u WHERE u.role <> 'PATIENT' AND u.specialization IS NOT NULL")
+	    List<String> findDistinctSpecializationsExcludingPatients();
+
+	    List<User> findByRoleAndSpecialization(String role, String specialization);
 	
 }

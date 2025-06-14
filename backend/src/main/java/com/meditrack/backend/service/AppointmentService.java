@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import com.meditrack.backend.model.Appointment;
 import com.meditrack.backend.model.AppointmentRequest;
+import com.meditrack.backend.model.User;
 import com.meditrack.backend.repository.AppointmentRepository;
 import com.meditrack.backend.repository.UserRepository;
 
@@ -151,6 +152,9 @@ public class AppointmentService {
         if(optional.get().getStatus().equals("REJECTED")) {
         	return ResponseEntity.badRequest().body("Appointment Alredy Rejected");
         }
+        if(optional.get().getStatus().equals("COMPLETED")) {
+        	return ResponseEntity.badRequest().body("Appointment already completed");
+        }
         Appointment app = optional.get();
         app.setStatus(status.toUpperCase());
         appointmentRepo.save(app);
@@ -182,5 +186,51 @@ public class AppointmentService {
             appointmentRepo.save(appt);
             System.out.println("Auto-rejected appointment ID: " + appt.getId());
         });
+    }
+    
+    public List<String> getAllSpecializations() {
+        return userRepo.findDistinctSpecializationsExcludingPatients();
+    }
+    
+    public List<Map<String, String>> getAvailableDoctorsBySpecialization(String specialization, LocalDate date) {
+        if (date == null) date = LocalDate.now();
+
+        List<User> doctors = userRepo.findByRoleAndSpecialization("DOCTOR", specialization);
+        List<Map<String, String>> result = new ArrayList<>();
+
+        for (User doc : doctors) {
+            List<String> bookedSlots = appointmentRepo.findSlotsByDoctorAndDate(doc.getEmail(), date);
+            if (bookedSlots.size() < ALL_SLOTS.size()) {
+                Map<String, String> doctorInfo = new HashMap<>();
+                doctorInfo.put("email", doc.getEmail());
+                doctorInfo.put("name", doc.getName());
+                result.add(doctorInfo);
+            }
+        }
+
+        return result;
+    }
+    
+    @Scheduled(fixedRate = 300000) // Runs every 5 minutes
+    public void updateAppointmentsToInProgress() {
+        LocalDate today = LocalDate.now();
+        LocalTime now = LocalTime.now();
+
+        List<Appointment> acceptedAppointments = appointmentRepo.findAcceptedAppointments(today);
+
+        for (Appointment appt : acceptedAppointments) {
+            try {
+                LocalTime slotTime = LocalTime.parse(appt.getSlot(), TIME_FORMATTER);
+                boolean isTodayAndTimePassed = appt.getAppointmentDate().isEqual(today) && slotTime.isBefore(now);
+                boolean isPastDate = appt.getAppointmentDate().isBefore(today);
+
+                if ((isTodayAndTimePassed || isPastDate) && "ACCEPTED".equals(appt.getStatus())) {
+                    appt.setStatus("IN_PROGRESS");
+                    appointmentRepo.save(appt);
+                }
+            } catch (Exception e) {
+                System.err.println("Error parsing slot time: " + appt.getSlot());
+            }
+        }
     }
 }

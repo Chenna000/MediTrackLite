@@ -5,6 +5,15 @@ public class RegisterRequest {
 	private String email;
 	private String password;
 	private String role;
+	private String specialization;
+	
+	
+	public String getSpecialization() {
+		return specialization;
+	}
+	public void setSpecialization(String specialization) {
+		this.specialization = specialization;
+	}
 	public String getName() {
 		return name;
 	}
@@ -20,7 +29,7 @@ public class RegisterRequest {
 	public String getPassword() {
 		return password;
 	}
-	public void setPassowrd(String password) {
+	public void setPassword(String password) {
 		this.password = password;
 	}
 	public String getRole() {
@@ -29,12 +38,13 @@ public class RegisterRequest {
 	public void setRole(String role) {
 		this.role = role;
 	}
-	public RegisterRequest(String name, String email, String password, String role) {
+	public RegisterRequest(String name, String email, String password, String role, String specialization) {
 		super();
 		this.name = name;
 		this.email = email;
 		this.password = password;
 		this.role = role;
+		this.specialization = specialization;
 	}
 	public RegisterRequest() {
 		

@@ -3,17 +3,27 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import './../css/PatientHome.css';
 
-
 const API = axios.create({
   baseURL: 'http://localhost:8080',
   withCredentials: true,
 });
+
+const STATUS_LIST = [
+  { label: 'All', value: 'ALL' },
+  { label: 'Pending', value: 'PENDING' },
+  { label: 'Accepted', value: 'ACCEPTED' },
+  { label: 'Rejected', value: 'REJECTED' },
+  { label: 'In Progress', value: 'IN_PROGRESS' },
+  { label: 'Completed', value: 'COMPLETED' },
+];
 
 const PatientHome = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [appointments, setAppointments] = useState([]);
   const [date, setDate] = useState('');
+  const [specializations, setSpecializations] = useState([]);
+  const [selectedSpecialization, setSelectedSpecialization] = useState('');
   const [doctors, setDoctors] = useState([]);
   const [slots, setSlots] = useState([]);
   const [bookForm, setBookForm] = useState({
@@ -35,16 +45,16 @@ const PatientHome = () => {
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [passwordError, setError] = useState('');
   const [passwordSuccess, setSuccess] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState('ALL');
 
   let timeout;
 
   // Fetch logged-in user details
   const fetchUser = async () => {
     try {
-      const res = await API.get('/api/auth/me', {withCredentials: true});
-      if (res.data.role !== 'PATIENT')  navigate('/login');
+      const res = await API.get('/api/auth/me', { withCredentials: true });
+      if (res.data.role !== 'PATIENT') navigate('/login');
       setUser(res.data);
-      //document.title = `MediTrack - ${res.data.name}`;
       fetchAppointments(res.data.email);
     } catch (err) {
       console.error('User session invalid or expired', err);
@@ -66,14 +76,59 @@ const PatientHome = () => {
     }
   };
 
-  // Doctor and slot fetching
+  // Fetch specializations when date is selected
   useEffect(() => {
-    if (!date) return setDoctors([]);
-    API.get('/appointments/available-doctors', { params: { date } })
-      .then((res) => setDoctors(res.data))
-      .catch(() => setDoctors([]));
+    if (!date) {
+      setSpecializations([]);
+      setSelectedSpecialization('');
+      setDoctors([]);
+      setBookForm((prev) => ({
+        ...prev,
+        doctorEmail: '',
+        doctorName: '',
+        slot: '',
+      }));
+      return;
+    }
+    API.get('/appointments/specializations')
+      .then((res) => setSpecializations(res.data))
+      .catch(() => setSpecializations([]));
+    setSelectedSpecialization('');
+    setDoctors([]);
+    setBookForm((prev) => ({
+      ...prev,
+      doctorEmail: '',
+      doctorName: '',
+      slot: '',
+    }));
   }, [date]);
 
+  // Fetch doctors when specialization is selected
+  useEffect(() => {
+    if (!date || !selectedSpecialization) {
+      setDoctors([]);
+      setBookForm((prev) => ({
+        ...prev,
+        doctorEmail: '',
+        doctorName: '',
+        slot: '',
+      }));
+      return;
+    }
+    API.get('/appointments/doctorsdata', {
+      params: { specialization: selectedSpecialization, date },
+    })
+      .then((res) => setDoctors(res.data))
+      .catch(() => setDoctors([]));
+    setBookForm((prev) => ({
+      ...prev,
+      doctorEmail: '',
+      doctorName: '',
+      slot: '',
+    }));
+  }, [date, selectedSpecialization]);
+
+  // Fetch slots when doctor is selected
   useEffect(() => {
     if (!date || !bookForm.doctorEmail) return setSlots([]);
     API.get('/appointments/available-slots', {
@@ -88,7 +143,7 @@ const PatientHome = () => {
     e.preventDefault();
     setBookMsg('');
     const { doctorEmail, doctorName, slot, phoneNo, problemDescription } = bookForm;
-    if (!date || !doctorEmail || !slot || !problemDescription.trim()) {
+    if (!date || !selectedSpecialization || !doctorEmail || !slot || !problemDescription.trim()) {
       setBookMsg('All fields are required.');
       return;
     }
@@ -101,12 +156,20 @@ const PatientHome = () => {
         phoneNo,
         problemDescription,
         appointmentDate: date,
+        specialization: selectedSpecialization,
         patientEmail: user.email,
       });
       setBookMsg(res.data);
       fetchAppointments(user.email);
       setDate('');
-      setBookForm({ doctorEmail: '', doctorName: '', slot: '', phoneNo: '', problemDescription: '' });
+      setSelectedSpecialization('');
+      setBookForm({
+        doctorEmail: '',
+        doctorName: '',
+        slot: '',
+        phoneNo: '',
+        problemDescription: '',
+      });
     } catch (err) {
       setBookMsg(err.response?.data || 'Something went wrong. Please try again.');
     }
@@ -133,13 +196,13 @@ const PatientHome = () => {
     window.onpopstate = () => window.history.go(1);
 
     return () => {
-      
       window.removeEventListener('mousemove', resetTimer);
       window.removeEventListener('keydown', resetTimer);
       window.removeEventListener('click', resetTimer);
       clearTimeout(timeout);
       window.onpopstate = null;
     };
+    // eslint-disable-next-line
   }, []);
 
   const handleLogout = async (auto = false) => {
@@ -172,54 +235,44 @@ const PatientHome = () => {
     setConfirmNewPassword('');
   };
 
-   // Password change handler
+  // Password change handler
   const handleChangePassword = async (e) => {
-  e.preventDefault();
-  setError('');
-  setSuccess('');
+    e.preventDefault();
+    setError('');
+    setSuccess('');
 
-  if (!oldPassword || !newPassword || !confirmNewPassword) {
-    setError('All fields are required.');
-    return;
-  }
-
-  if (newPassword !== confirmNewPassword) {
-    setError('New passwords do not match.');
-    return;
-  }
-
-  try {
-    const res = await axios.post(
-      'http://localhost:8080/api/auth/change-password',
-      { oldPassword, newPassword },
-      { withCredentials: true }
-    );
-
-    setSuccess('Password changed successfully. Redirecting to login...');
-
-    // Optional delay so user sees the message
-    setTimeout(() => {
-      handleCloseChangePassword();
-      navigate('/login');
-    }, 2000);
-  } catch (err) {
-    console.error('Password change error:', err);
-
-    if (err.response?.data?.message) {
-      setError(err.response.data.message);
-    } else if (typeof err.response?.data === 'string') {
-      setError(err.response.data);
-    } else {
-      setError('Failed to change password');
+    if (!oldPassword || !newPassword || !confirmNewPassword) {
+      setError('All fields are required.');
+      return;
     }
-  }
-};
 
+    if (newPassword !== confirmNewPassword) {
+      setError('New passwords do not match.');
+      return;
+    }
+
+    try {
+      await API.post(
+        '/api/auth/change-password',
+        { oldPassword, newPassword }
+      );
+      setSuccess('Password changed successfully. Redirecting to login...');
+      setShowChangePassword(false);
+      alert('Password changed successfully!');
+      navigate('/login');
+    } catch (err) {
+      setError(err.response?.data || 'Failed to change password');
+    }
+  };
 
   const handleCloseChangePassword = () => setShowChangePassword(false);
 
+  // Filter appointments by selected status
+  const filteredAppointments = appointments.filter(appt =>
+    selectedStatus === 'ALL' ? true : appt.status === selectedStatus
+  );
 
-   return (
+  return (
     <div>
       {/* Navbar */}
       <div className="navbar">
@@ -250,6 +303,20 @@ const PatientHome = () => {
             </div>
 
             <div className="form-row">
+              <label>Specialization:</label>
+              <select
+                value={selectedSpecialization}
+                onChange={e => setSelectedSpecialization(e.target.value)}
+                required
+              >
+                <option value="">Select Specialization</option>
+                {specializations.map(spec => (
+                  <option key={spec} value={spec}>{spec}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-row">
               <label>Doctor:</label>
               <select
                 value={
@@ -269,14 +336,11 @@ const PatientHome = () => {
                 required
               >
                 <option value="">Select Doctor</option>
-                {doctors.map((docEmail) => {
-                  const name = docEmail.split('@')[0];
-                  return (
-                    <option key={docEmail} value={`${docEmail}|${name}`}>
-                      {name.charAt(0).toUpperCase() + name.slice(1)}
-                    </option>
-                  );
-                })}
+                {doctors.map((doc) => (
+                  <option key={doc.email} value={`${doc.email}|${doc.name}`}>
+                    {doc.name}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -328,27 +392,38 @@ const PatientHome = () => {
         {/* Right: Appointments Section */}
         <div className="appointments-section">
           <h3>My Appointments</h3>
-          {appointments.length === 0 ? (
-            <p>No appointments yet.</p>
+          <div className="status-tabs">
+            {STATUS_LIST.map(tab => (
+              <button
+                key={tab.value}
+                onClick={() => setSelectedStatus(tab.value)}
+                className={selectedStatus === tab.value ? 'active' : ''}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+          {filteredAppointments.length === 0 ? (
+            <p>No appointments{selectedStatus !== 'ALL' ? ` with status "${selectedStatus}"` : ''}.</p>
           ) : (
             <ul className="appointment-list">
-              {[...appointments]
-    .sort((a, b) => {
-      const dateTimeA = new Date(`${a.appointmentDate} ${a.slot}`);
-      const dateTimeB = new Date(`${b.appointmentDate} ${b.slot}`);
-      return dateTimeB - dateTimeA;
-    })
-    .map((appt) => (
-      <li key={appt.id} className="appointment-card">
-        <p><strong>Date:</strong> {appt.appointmentDate}</p>
-        <p><strong>Time:</strong> {appt.slot}</p>
-        <p><strong>Doctor:</strong> {appt.doctorName}</p>
-        <p><strong>Status:</strong> {appt.status}</p>
-        {appt.status !== '' && (
-          <button onClick={() => navigate(`/print/${appt.id}`)}>Print</button>
-        )}
-      </li>
-    ))}
+              {[...filteredAppointments]
+                .sort((a, b) => {
+                  const dateTimeA = new Date(`${a.appointmentDate} ${a.slot}`);
+                  const dateTimeB = new Date(`${b.appointmentDate} ${b.slot}`);
+                  return dateTimeB - dateTimeA;
+                })
+                .map((appt) => (
+                  <li key={appt.id} className="appointment-card">
+                    <p><strong>Date:</strong> {appt.appointmentDate}</p>
+                    <p><strong>Time:</strong> {appt.slot}</p>
+                    <p><strong>Doctor:</strong> {appt.doctorName}</p>
+                    <p><strong>Status:</strong> {appt.status}</p>
+                    {appt.status !== '' && (
+                      <button onClick={() => navigate(`/print/${appt.id}`)}>Print</button>
+                    )}
+                  </li>
+                ))}
             </ul>
           )}
         </div>
@@ -401,7 +476,6 @@ const PatientHome = () => {
       )}
     </div>
   );
-
 };
 
 export default PatientHome;

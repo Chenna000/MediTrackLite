@@ -171,3 +171,18 @@
   border: none;
   cursor: pointer;
 }
+.status-tabs {
+  margin-bottom: 12px;
+}
+.status-tabs button {
+  margin-right: 8px;
+  padding: 6px 16px;
+  border: none;
+  background: #eee;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.status-tabs button.active {
+  background: #1976d2;
+  color: #fff;
+}

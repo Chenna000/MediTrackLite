@@ -8,23 +8,42 @@ const API = axios.create({
   withCredentials: true,
 });
 
+const STATUS_LIST = [
+  { label: 'Pending', value: 'PENDING' },
+  { label: 'Accepted', value: 'ACCEPTED' },
+  { label: 'Rejected', value: 'REJECTED' },
+  { label: 'In Progress', value: 'IN_PROGRESS' },
+  { label: 'Completed', value: 'COMPLETED' },
+];
+
 const DoctorHome = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  const [pending, setPending] = useState([]);
-  const [accepted, setAccepted] = useState([]);
+  const [appointments, setAppointments] = useState([]);
+  const [selectedStatus, setSelectedStatus] = useState('PENDING');
   const [toast, setToast] = useState('');
 
+  // Profile & password
   const [profile, setProfile] = useState(null);
   const [profileError, setProfileError] = useState('');
   const [showProfile, setShowProfile] = useState(false);
-
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  // Prescription modal/form (multi-medicine)
+  const [showPrescriptionForm, setShowPrescriptionForm] = useState(false);
+  const [prescriptionForm, setPrescriptionForm] = useState({
+    appointmentId: '',
+    medicines: [
+      { medicineName: '', dosageInstructions: '', frequency: '' }
+    ],
+  });
+  const [prescriptionError, setPrescriptionError] = useState('');
+  const [prescriptionSuccess, setPrescriptionSuccess] = useState('');
 
   const timeoutRef = useRef(null);
 
@@ -62,7 +81,6 @@ const DoctorHome = () => {
           navigate('/login');
         } else {
           setUser(res.data);
-          //document.title = `Doctor - ${res.data.name}`;
           loadAppointments(res.data.email);
         }
       } catch (err) {
@@ -76,12 +94,8 @@ const DoctorHome = () => {
 
   const loadAppointments = async (email) => {
     try {
-      const [pendingRes, acceptedRes] = await Promise.all([
-        API.get('/appointments/doctor/pending', { params: { email } }),
-        API.get('/appointments/doctor/accepted', { params: { email } }),
-      ]);
-      setPending(pendingRes.data);
-      setAccepted(acceptedRes.data);
+      const res = await API.get('/appointments/doctor', { params: { email } });
+      setAppointments(res.data);
     } catch (err) {
       console.error('Error loading appointments:', err);
     }
@@ -97,6 +111,73 @@ const DoctorHome = () => {
       setToast('Failed to update status.');
     }
     setTimeout(() => setToast(''), 3000);
+  };
+
+  // Prescription form logic (multi-medicine)
+  const openPrescriptionForm = (appointmentId) => {
+    setPrescriptionForm({
+      appointmentId,
+      medicines: [{ medicineName: '', dosageInstructions: '', frequency: '' }],
+    });
+    setPrescriptionError('');
+    setPrescriptionSuccess('');
+    setShowPrescriptionForm(true);
+  };
+
+  const closePrescriptionForm = () => {
+    setShowPrescriptionForm(false);
+    setPrescriptionForm({
+      appointmentId: '',
+      medicines: [{ medicineName: '', dosageInstructions: '', frequency: '' }],
+    });
+    setPrescriptionError('');
+    setPrescriptionSuccess('');
+  };
+
+  const handleMedicineChange = (idx, e) => {
+    const { name, value } = e.target;
+    setPrescriptionForm((prev) => {
+      const updated = [...prev.medicines];
+      updated[idx][name] = value;
+      return { ...prev, medicines: updated };
+    });
+  };
+
+  const addMedicineRow = () => {
+    setPrescriptionForm((prev) => ({
+      ...prev,
+      medicines: [...prev.medicines, { medicineName: '', dosageInstructions: '', frequency: '' }],
+    }));
+  };
+
+  const removeMedicineRow = (idx) => {
+    setPrescriptionForm((prev) => ({
+      ...prev,
+      medicines: prev.medicines.filter((_, i) => i !== idx),
+    }));
+  };
+
+  const handlePrescriptionSubmit = async (e) => {
+    e.preventDefault();
+    setPrescriptionError('');
+    setPrescriptionSuccess('');
+    const { appointmentId, medicines } = prescriptionForm;
+    if (medicines.some(m => !m.medicineName || !m.dosageInstructions || !m.frequency)) {
+      setPrescriptionError('All fields are required for each medicine.');
+      return;
+    }
+    console.log('Submitting prescription:', prescriptionForm);
+    try {
+      await API.post('/prescriptions/upload', {
+        appointmentId,
+        prescriptions:medicines,
+      });
+      setPrescriptionSuccess('Prescription uploaded and appointment marked as completed.');
+      setShowPrescriptionForm(false);
+      loadAppointments(user.email);
+    } catch (err) {
+      setPrescriptionError(err.response?.data || 'Failed to upload prescription.');
+    }
   };
 
   const handleProfileClick = async () => {
@@ -156,6 +237,9 @@ const DoctorHome = () => {
 
   if (!user) return <div>Loading...</div>;
 
+  // Filter appointments by selected status
+  const filteredAppointments = appointments.filter(a => selectedStatus === 'ALL' ? true : a.status === selectedStatus);
+
   return (
     <div className="doctor-container">
       <div className="navbar">
@@ -169,53 +253,109 @@ const DoctorHome = () => {
 
       {toast && <div className="toast">{toast}</div>}
 
-    <div className="appointments-container">
-      <div className="appointments-section">
-        <h3>🕒 Pending Appointments</h3>
-        {pending.length === 0 ? (
-  <p>No pending appointments.</p>
-) : (
-  [...pending]
-    .sort((a, b) => {
-      const dateTimeA = new Date(`${a.appointmentDate} ${a.slot}`);
-      const dateTimeB = new Date(`${b.appointmentDate} ${b.slot}`);
-      return dateTimeB - dateTimeA;
-    })
-    .map((a) => (
-      <div key={a.id} className="appt-card">
-        <p><strong>{a.appointmentDate} @ {a.slot}</strong></p>
-        <p>Appointment ID: {a.id}</p>
-        <p>Patient: {a.patientEmail.split("@")[0]}</p>
-        <p>Reason: {a.problemDescription}</p>
-        <button onClick={() => handleStatus(a.id, 'ACCEPTED')}>✔ Accept</button>
-        <button className="reject-btn" onClick={() => handleStatus(a.id, 'REJECTED')}>✘ Reject</button>
-      </div>
-    ))
-)}
+      <div className="status-tabs">
+        {STATUS_LIST.map(tab => (
+          <button
+            key={tab.value}
+            onClick={() => setSelectedStatus(tab.value)}
+            className={selectedStatus === tab.value ? 'active' : ''}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
-      <div className="appointments-section">
-        <h3>✅ Accepted Appointments</h3>
-        {accepted.length === 0 ? (
-  <p>No accepted appointments.</p>
-) : (
-  [...accepted]
-    .sort((a, b) => {
-      const dateTimeA = new Date(`${a.appointmentDate} ${a.slot}`);
-      const dateTimeB = new Date(`${b.appointmentDate} ${b.slot}`);
-      return dateTimeB - dateTimeA;
-    })
-    .map((a) => (
-      <div key={a.id} className="appt-card accepted">
-        <p><strong>{a.appointmentDate} @ {a.slot}</strong></p>
-        <p>Patient: {a.patientEmail.split("@")[0]}</p>
-        <button onClick={() => navigate(`/print/${a.id}`)}>🖨️ Print</button>
-      </div>
-    ))
-)}
-      </div>
+      <div className="appointments-container">
+        <div className="appointments-section">
+          <h3>{STATUS_LIST.find(s => s.value === selectedStatus)?.label} Appointments</h3>
+          {filteredAppointments.length === 0 ? (
+            <p>No appointments in this category.</p>
+          ) : (
+            [...filteredAppointments]
+              .sort((a, b) => {
+                const dateTimeA = new Date(`${a.appointmentDate} ${a.slot}`);
+                const dateTimeB = new Date(`${b.appointmentDate} ${b.slot}`);
+                return dateTimeB - dateTimeA;
+              })
+              .map((a) => (
+                <div key={a.id} className={`appt-card ${a.status.toLowerCase()}`}>
+                  <p><strong>{a.appointmentDate} @ {a.slot}</strong></p>
+                  <p>Appointment ID: {a.id}</p>
+                  <p>Patient: {a.patientEmail.split("@")[0]}</p>
+                  <p>Reason: {a.problemDescription}</p>
+                  {a.status === 'PENDING' && (
+                    <>
+                      <button onClick={() => handleStatus(a.id, 'ACCEPTED')}>✔ Accept</button>
+                      <button className="reject-btn" onClick={() => handleStatus(a.id, 'REJECTED')}>✘ Reject</button>
+                    </>
+                  )}
+                  {a.status === 'ACCEPTED' && (
+                    <button onClick={() => handleStatus(a.id, 'IN_PROGRESS')}>Start Consultation</button>
+                  )}
+                  {a.status === 'IN_PROGRESS' && (
+                    <button onClick={() => openPrescriptionForm(a.id)} style={{backgroundColor:' #4a90e2', color:'white'}}>Complete & Upload Prescription</button>
+                  )}
+                  {a.status === 'COMPLETED' && (
+                    <button onClick={() => navigate(`/print/${a.id}`)}  style={{backgroundColor:' #4a90e2', color:'white'}}>View & Print</button>
+                  )}
+                </div>
+              ))
+          )}
+        </div>
       </div>
 
+      {/* Prescription Upload Modal */}
+      {showPrescriptionForm && (
+        <div className="modal-overlay" onClick={closePrescriptionForm}>
+          <div className="modal-container" onClick={e => e.stopPropagation()}>
+            <button className="modal-close-btn" onClick={closePrescriptionForm}>&times;</button>
+            <h3>Upload Prescription</h3>
+            {prescriptionError && <p className="modal-error">{prescriptionError}</p>}
+            {prescriptionSuccess && <p className="modal-success">{prescriptionSuccess}</p>}
+            <form onSubmit={handlePrescriptionSubmit}>
+              {prescriptionForm.medicines.map((med, idx) => (
+                <div key={idx} style={{ marginBottom: 10, borderBottom: '1px solid #eee', paddingBottom: 8 }}>
+                  <input
+                    type="text"
+                    name="medicineName"
+                    placeholder="Medicine Name"
+                    value={med.medicineName}
+                    onChange={e => handleMedicineChange(idx, e)}
+                    required
+                    style={{ marginRight: 8 }}
+                  />
+                  <input
+                    type="text"
+                    name="dosageInstructions"
+                    placeholder="Dosage Instructions"
+                    value={med.dosageInstructions}
+                    onChange={e => handleMedicineChange(idx, e)}
+                    required
+                    style={{ marginRight: 8 }}
+                  />
+                  <input
+                    type="text"
+                    name="frequency"
+                    placeholder="Frequency"
+                    value={med.frequency}
+                    onChange={e => handleMedicineChange(idx, e)}
+                    required
+                    style={{ marginRight: 8 }}
+                  />
+                  {prescriptionForm.medicines.length > 1 && (
+                    <button type="button" onClick={() => removeMedicineRow(idx)} style={{ color: 'red' }}>Remove</button>
+                  )}
+                </div>
+              ))}
+              <button type="button" onClick={addMedicineRow} style={{ marginBottom: 10 }}>Add Medicine</button>
+              <br />
+              <button type="submit" className="modal-submit-btn" >Upload & Complete</button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Profile Modal */}
       {showProfile && (
         <div className="profile-modal">
           <div className="profile-content">
@@ -233,6 +373,7 @@ const DoctorHome = () => {
         </div>
       )}
 
+      {/* Change Password Modal */}
       {showChangePassword && (
         <div className="modal-overlay" onClick={handleCloseChangePassword}>
           <div className="modal-container" onClick={e => e.stopPropagation()}>

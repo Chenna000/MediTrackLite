@@ -11,6 +11,7 @@ const RegisterPage = () => {
   const [role, setRole] = useState('PATIENT');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [specialization, setSpecialization] = useState('');
   const navigate = useNavigate();
 
   const handleRegister = async () => {
@@ -20,17 +21,32 @@ const RegisterPage = () => {
       return;
     }
 
+    if (password !== confirmPassword) {
+        setError('Passwords do not match');
+        setSuccess('');
+        return;
+      }
+      if (role === 'DOCTOR' && !specialization.trim()) {
+      setError('Specialization is required for doctors');
+      setSuccess('');
+      return;
+    }
+
     try {
-      const res = await axios.post('http://localhost:8080/api/auth/register', {
+      const payload = {
         name,
         email,
-        password,// match backend field!
-        role
-      });
+        password, // match backend field!
+        role,
+        specialization: role === 'DOCTOR' ? specialization :"PATIENT", // only include if doctor
+      };
+
+      // Send registration request to the backend
+      const res = await axios.post('http://localhost:8080/api/auth/register', payload);
       setSuccess(res.data);
       setError('');
       setTimeout(() => navigate('/login'), 2000); // Redirect to login after success
-    
+      
     } catch (err) {
       setError(err.response?.data || 'Registration failed');
       setSuccess('');
@@ -71,23 +87,34 @@ return (
       />
       
       
-      {/* <input
+      <input
         placeholder=" Confirm Password"
         type="password"
-        value={password}
+        value={confirmPassword}
         onChange={e => setConfirmPassword(e.target.value)}
         onCopy={e => e.preventDefault()}
         onPaste={e => e.preventDefault()}
         onCut={e => e.preventDefault()}
-      /> */}
+      /> 
       <select
         value={role}
         onChange={e => setRole(e.target.value)}
       >
-        <option value="PATIENT">Select Role</option>
+        <option value="null">Select Role</option>
         <option value="PATIENT">Patient</option>
         <option value="DOCTOR">Doctor</option>
       </select>
+
+      {role === 'DOCTOR' && (
+          <input
+            placeholder="Specialization"
+            value={specialization}
+            onChange={e => setSpecialization(e.target.value)}
+            onCopy={e => e.preventDefault()}
+            onPaste={e => e.preventDefault()}
+            onCut={e => e.preventDefault()}
+          />
+        )}
       <button onClick={handleRegister}>Register</button>
       <p>Already have an account? <a href="/login">Login</a></p>
     </div>
