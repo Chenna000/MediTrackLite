@@ -13,6 +13,14 @@ public class PrescriptionRequest {
 	 
 	 @JsonProperty("prescriptions")
 	 private List<Prescription> prescriptions;
+	 private String consultationNotes;
+	 
+	public String getConsultationNotes() {
+		return consultationNotes;
+	}
+	public void setConsultationNotes(String consultationNotes) {
+		this.consultationNotes = consultationNotes;
+	}
 	public Long getAppointmentId() {
 		return appointmentId;
 	}
@@ -25,10 +33,11 @@ public class PrescriptionRequest {
 	public void setPrescriptions(List<Prescription> prescriptions) {
 		this.prescriptions = prescriptions;
 	}
-	public PrescriptionRequest(Long appointmentId, List<Prescription> prescriptions) {
+	public PrescriptionRequest(Long appointmentId, List<Prescription> prescriptions, String consultationNotes) {
 		super();
 		this.appointmentId = appointmentId;
 		this.prescriptions = prescriptions;
+		this.consultationNotes = consultationNotes;
 	}
 	public PrescriptionRequest() {
 		

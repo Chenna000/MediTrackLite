@@ -1,5 +1,6 @@
 package com.meditrack.backend.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -23,6 +24,18 @@ public class Prescription {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "appointment_id")
     private Appointment appointment;
+    
+    @Column(length = 1000)
+    private String consultationNotes;
+    
+    
+	public String getConsultationNotes() {
+		return consultationNotes;
+	}
+
+	public void setConsultationNotes(String consultationNotes) {
+		this.consultationNotes = consultationNotes;
+	}
 
 	public Long getId() {
 		return id;
@@ -65,13 +78,14 @@ public class Prescription {
 	}
 
 	public Prescription(Long id, String medicineName, String dosageInstructions, String frequency,
-			Appointment appointment) {
+			Appointment appointment, String consultationNotes) {
 		super();
 		this.id = id;
 		this.medicineName = medicineName;
 		this.dosageInstructions = dosageInstructions;
 		this.frequency = frequency;
 		this.appointment = appointment;
+		this.consultationNotes = consultationNotes;
 	}
 
 	public Prescription() {

@@ -420,7 +420,7 @@ const PatientHome = () => {
                     <p><strong>Doctor:</strong> {appt.doctorName}</p>
                     <p><strong>Status:</strong> {appt.status}</p>
                     {appt.status !== '' && (
-                      <button onClick={() => navigate(`/print/${appt.id}`)}>Print</button>
+                      <button onClick={() => navigate(`/print/${appt.id}`)}> View & Print</button>
                     )}
                   </li>
                 ))}

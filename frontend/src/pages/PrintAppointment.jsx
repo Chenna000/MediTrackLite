@@ -10,6 +10,7 @@ const PrintAppointment = () => {
   const [appointment, setAppointment] = useState(null);
   const [userRole, setUserRole] = useState(null);
   const [prescriptions, setPrescriptions] = useState([]);
+  const [consultationNotes, setConsultationNotes] = useState('');
   const [prescriptionError, setPrescriptionError] = useState('');
 
   useEffect(() => {
@@ -22,27 +23,35 @@ const PrintAppointment = () => {
       .catch((err) => console.error("Error fetching user role:", err));
   }, [id]);
 
-  // Fetch prescriptions if appointment is completed
+  // Fetch prescriptions and consultation notes if appointment is completed
   useEffect(() => {
     if (appointment && appointment.status === 'COMPLETED') {
       setPrescriptions([]);
+      setConsultationNotes('');
       setPrescriptionError('');
       axios.get(`http://localhost:8080/prescriptions/${appointment.id}`, { withCredentials: true })
         .then(res => {
           // If backend returns a single prescription, wrap in array
           if (Array.isArray(res.data)) {
             setPrescriptions(res.data);
+            if (res.data.length > 0 && res.data[0].consultationNotes) {
+              setConsultationNotes(res.data[0].consultationNotes);
+            }
           } else if (res.data) {
-            // If backend returns {medicines: [...]}
+            // If backend returns {medicines: [...], consultationNotes: "..."}
             if (Array.isArray(res.data.medicines)) {
               setPrescriptions(res.data.medicines);
+              setConsultationNotes(res.data.consultationNotes || '');
             } else if (res.data.medicineName) {
               setPrescriptions([res.data]);
+              setConsultationNotes(res.data.consultationNotes || '');
             } else {
               setPrescriptions([]);
+              setConsultationNotes('');
             }
           } else {
             setPrescriptions([]);
+            setConsultationNotes('');
           }
         })
         .catch(() => setPrescriptionError('No prescription found.'));
@@ -76,17 +85,29 @@ const PrintAppointment = () => {
       body,
     });
 
-    if (appointment?.status === 'COMPLETED' && prescriptions.length > 0) {
-      doc.text('Prescription', 14, doc.lastAutoTable.finalY + 10);
-      doc.autoTable({
-        startY: doc.lastAutoTable.finalY + 15,
-        head: [['Medicine Name', 'Dosage Instructions', 'Frequency']],
-        body: prescriptions.map(med => [
-          med.medicineName || '',
-          med.dosageInstructions || '',
-          med.frequency || ''
-        ]),
-      });
+    let lastY = doc.lastAutoTable.finalY;
+
+    if (appointment?.status === 'COMPLETED') {
+      if (consultationNotes) {
+        doc.text('Consultation Notes:', 14, lastY + 10);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(11);
+        doc.text(consultationNotes, 14, lastY + 18, { maxWidth: 180 });
+        lastY += 25;
+      }
+      if (prescriptions.length > 0) {
+        doc.setFontSize(12);
+        doc.text('Prescription', 14, lastY + 10);
+        doc.autoTable({
+          startY: lastY + 15,
+          head: [['Medicine Name', 'Dosage Instructions', 'Frequency']],
+          body: prescriptions.map(med => [
+            med.medicineName || '',
+            med.dosageInstructions || '',
+            med.frequency || ''
+          ]),
+        });
+      }
     }
 
     doc.save(`Appointment_${appointment?.id}.pdf`);
@@ -134,6 +155,14 @@ const PrintAppointment = () => {
             background: '#e3f2fd',
             borderRadius: '8px'
           }}>
+            <h3 style={{ color: '#1976d2' }}>Consultation Notes</h3>
+            {consultationNotes ? (
+              <div style={{ marginBottom: '15px', whiteSpace: 'pre-wrap' }}>
+                {consultationNotes}
+              </div>
+            ) : (
+              <div style={{ marginBottom: '15px', color: '#888' }}>No consultation notes.</div>
+            )}
             <h3 style={{ color: '#1976d2' }}>Prescription</h3>
             {prescriptionError && <p style={{ color: 'red' }}>{prescriptionError}</p>}
             {prescriptions.length > 0 ? (

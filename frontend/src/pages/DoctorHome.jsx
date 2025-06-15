@@ -34,13 +34,14 @@ const DoctorHome = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Prescription modal/form (multi-medicine)
+  // Prescription modal/form (multi-medicine + consultation notes)
   const [showPrescriptionForm, setShowPrescriptionForm] = useState(false);
   const [prescriptionForm, setPrescriptionForm] = useState({
     appointmentId: '',
     medicines: [
       { medicineName: '', dosageInstructions: '', frequency: '' }
     ],
+    consultationNotes: '',
   });
   const [prescriptionError, setPrescriptionError] = useState('');
   const [prescriptionSuccess, setPrescriptionSuccess] = useState('');
@@ -113,11 +114,12 @@ const DoctorHome = () => {
     setTimeout(() => setToast(''), 3000);
   };
 
-  // Prescription form logic (multi-medicine)
+  // Prescription form logic (multi-medicine + consultation notes)
   const openPrescriptionForm = (appointmentId) => {
     setPrescriptionForm({
       appointmentId,
       medicines: [{ medicineName: '', dosageInstructions: '', frequency: '' }],
+      consultationNotes: '',
     });
     setPrescriptionError('');
     setPrescriptionSuccess('');
@@ -129,6 +131,7 @@ const DoctorHome = () => {
     setPrescriptionForm({
       appointmentId: '',
       medicines: [{ medicineName: '', dosageInstructions: '', frequency: '' }],
+      consultationNotes: '',
     });
     setPrescriptionError('');
     setPrescriptionSuccess('');
@@ -161,16 +164,16 @@ const DoctorHome = () => {
     e.preventDefault();
     setPrescriptionError('');
     setPrescriptionSuccess('');
-    const { appointmentId, medicines } = prescriptionForm;
+    const { appointmentId, medicines, consultationNotes } = prescriptionForm;
     if (medicines.some(m => !m.medicineName || !m.dosageInstructions || !m.frequency)) {
       setPrescriptionError('All fields are required for each medicine.');
       return;
     }
-    console.log('Submitting prescription:', prescriptionForm);
     try {
       await API.post('/prescriptions/upload', {
         appointmentId,
-        prescriptions:medicines,
+        prescriptions: medicines,
+        consultationNotes,
       });
       setPrescriptionSuccess('Prescription uploaded and appointment marked as completed.');
       setShowPrescriptionForm(false);
@@ -348,6 +351,15 @@ const DoctorHome = () => {
                 </div>
               ))}
               <button type="button" onClick={addMedicineRow} style={{ marginBottom: 10 }}>Add Medicine</button>
+              <br />
+              <textarea
+                placeholder="Enter consultation notes"
+                value={prescriptionForm.consultationNotes}
+                onChange={(e) =>
+                  setPrescriptionForm({ ...prescriptionForm, consultationNotes: e.target.value })
+                }
+                style={{ width: '100%', minHeight: '60px', marginTop: 10 }}
+              />
               <br />
               <button type="submit" className="modal-submit-btn" >Upload & Complete</button>
             </form>

@@ -31,7 +31,10 @@ public class PrescriptionService {
 	        }
 
 	        List<Prescription> prescriptions = request.getPrescriptions();
-	        prescriptions.forEach(p -> p.setAppointment(appointment));
+	        prescriptions.forEach(p ->	{ 
+	        	p.setAppointment(appointment);
+	        	p.setConsultationNotes(request.getConsultationNotes());
+	        	});
 	        prescriptionRepo.saveAll(prescriptions);
 
 	        appointment.setStatus("COMPLETED");
