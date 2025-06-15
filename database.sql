@@ -35,6 +35,7 @@ CREATE TABLE `prescription` (
     `frequency` VARCHAR(255) DEFAULT NULL,
     `medicine_name` VARCHAR(255) DEFAULT NULL,
     `appointment_id` BIGINT DEFAULT NULL,
+    `consultation_notes` varchar(1000) DEFAULT NULL,
     PRIMARY KEY (`id`),
     KEY `FK_prescription_appointment` (`appointment_id`),
     CONSTRAINT `FK_prescription_appointment`
