@@ -24,6 +24,7 @@ const PrintAppointment = () => {
   }, [id]);
 
   // Fetch prescriptions and consultation notes if appointment is completed
+  // Added via github
   useEffect(() => {
     if (appointment && appointment.status === 'COMPLETED') {
       setPrescriptions([]);
