@@ -48,6 +48,7 @@ This project was built using **React (Vite)** for the frontend and **Spring Boot
 
 ### 💊 Prescription Management
 - Add multiple medicines per appointment
+- Consultation notes 
 - Each medicine has:
   - Name
   - Dosage instructions
