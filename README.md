@@ -95,7 +95,7 @@ This project was built using **React (Vite)** for the frontend and **Spring Boot
 - POST `/api/auth/register` – Register user
 - POST `/api/auth/login` – Login user
 - GET `/api/auth/profile` – Get logged-in user's data
-- POST `/appointments/book` – Book appointment
+- POST `/appointments` – Book appointment
 - GET `/appointments/doctor/pending` – Fetch doctor’s pending appointments
 - PUT `/appointments/{id}/status` – Accept/Reject appointment
 - POST `/prescriptions/upload` - Adds Prescription Details
