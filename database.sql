@@ -25,6 +25,7 @@ CREATE TABLE `appointments` (
     `problem_description` VARCHAR(255) DEFAULT NULL,         
     `slot` VARCHAR(255) DEFAULT NULL,                        
     `status` VARCHAR(255) DEFAULT NULL,                      -- Appointment status (PENDING, ACCEPTED, REJECTED,IN_PROGRESS,COMPLETED)
+    `patient_report_path` varchar(255) DEFAULT NULL,
     PRIMARY KEY (`id`)
 );
 
@@ -36,6 +37,7 @@ CREATE TABLE `prescription` (
     `medicine_name` VARCHAR(255) DEFAULT NULL,
     `appointment_id` BIGINT DEFAULT NULL,
     `consultation_notes` varchar(1000) DEFAULT NULL,
+    `lab_reports_path` varchar(255) DEFAULT NULL,
     PRIMARY KEY (`id`),
     KEY `FK_prescription_appointment` (`appointment_id`),
     CONSTRAINT `FK_prescription_appointment`
