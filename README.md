@@ -38,6 +38,7 @@ This project was built using **React (Vite)** for the frontend and **Spring Boot
 - View booked appointments in reverse chronological order
 - Print appointment confirmation
 - See prescription after appointment is completed
+- Optionally upload medical reports for easier consultation
 
 ### 👨‍⚕️ Doctor Module
 - View appointments split into **Pending** and **Accepted**
@@ -45,6 +46,7 @@ This project was built using **React (Vite)** for the frontend and **Spring Boot
 - Print accepted appointment details
 - Add prescriptions after appointment is in progress
 - Mark appointment status: `IN_PROGRESS` → `COMPLETED`
+- Otionally upload lab reports during prescription upload
 
 ### 💊 Prescription Management
 - Add multiple medicines per appointment
