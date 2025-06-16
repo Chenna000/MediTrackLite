@@ -34,7 +34,7 @@ const DoctorHome = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Prescription modal/form (multi-medicine + consultation notes)
+  // Prescription modal/form (multi-medicine + consultation notes + lab report)
   const [showPrescriptionForm, setShowPrescriptionForm] = useState(false);
   const [prescriptionForm, setPrescriptionForm] = useState({
     appointmentId: '',
@@ -43,6 +43,7 @@ const DoctorHome = () => {
     ],
     consultationNotes: '',
   });
+  const [labReportFile, setLabReportFile] = useState(null);
   const [prescriptionError, setPrescriptionError] = useState('');
   const [prescriptionSuccess, setPrescriptionSuccess] = useState('');
 
@@ -114,13 +115,14 @@ const DoctorHome = () => {
     setTimeout(() => setToast(''), 3000);
   };
 
-  // Prescription form logic (multi-medicine + consultation notes)
+  // Prescription form logic (multi-medicine + consultation notes + lab report)
   const openPrescriptionForm = (appointmentId) => {
     setPrescriptionForm({
       appointmentId,
       medicines: [{ medicineName: '', dosageInstructions: '', frequency: '' }],
       consultationNotes: '',
     });
+    setLabReportFile(null);
     setPrescriptionError('');
     setPrescriptionSuccess('');
     setShowPrescriptionForm(true);
@@ -133,6 +135,7 @@ const DoctorHome = () => {
       medicines: [{ medicineName: '', dosageInstructions: '', frequency: '' }],
       consultationNotes: '',
     });
+    setLabReportFile(null);
     setPrescriptionError('');
     setPrescriptionSuccess('');
   };
@@ -170,10 +173,18 @@ const DoctorHome = () => {
       return;
     }
     try {
-      await API.post('/prescriptions/upload', {
+      const formData = new FormData();
+      const prescriptionRequest = {
         appointmentId,
         prescriptions: medicines,
         consultationNotes,
+      };
+      formData.append('data', new Blob([JSON.stringify(prescriptionRequest)], { type: 'application/json' }));
+      if (labReportFile) {
+        formData.append('labReport', labReportFile);
+      }
+      await API.post('/prescriptions/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
       setPrescriptionSuccess('Prescription uploaded and appointment marked as completed.');
       setShowPrescriptionForm(false);
@@ -286,6 +297,17 @@ const DoctorHome = () => {
                   <p>Appointment ID: {a.id}</p>
                   <p>Patient: {a.patientEmail.split("@")[0]}</p>
                   <p>Reason: {a.problemDescription}</p>
+                  {/* Download Report button if report is available */}
+                  {a.status === 'PENDING' && a.patientReportPath && (
+                    <button
+                      style={{ marginBottom: 8, backgroundColor: '#607d8b', color: 'white' }}
+                      onClick={() => {
+                        window.open(`http://localhost:8080/files/download/${encodeURIComponent(a.patientReportPath)}`, '_blank');
+                      }}
+                    >
+                      Download Report
+                    </button>
+                  )}
                   {a.status === 'PENDING' && (
                     <>
                       <button onClick={() => handleStatus(a.id, 'ACCEPTED')}>✔ Accept</button>
@@ -310,7 +332,17 @@ const DoctorHome = () => {
       {/* Prescription Upload Modal */}
       {showPrescriptionForm && (
         <div className="modal-overlay" onClick={closePrescriptionForm}>
-          <div className="modal-container" onClick={e => e.stopPropagation()}>
+          <div className="modal-container" onClick={e => e.stopPropagation()}
+            style={{
+            maxHeight: '95vh',
+            overflowY: 'auto',
+            width: '400px',
+            background: '#fff',
+            borderRadius: '8px',
+            padding: '24px',
+            position: 'relative'
+  }}
+            >
             <button className="modal-close-btn" onClick={closePrescriptionForm}>&times;</button>
             <h3>Upload Prescription</h3>
             {prescriptionError && <p className="modal-error">{prescriptionError}</p>}
@@ -360,6 +392,16 @@ const DoctorHome = () => {
                 }
                 style={{ width: '100%', minHeight: '60px', marginTop: 10 }}
               />
+              <br />
+              <label style={{ marginTop: 10, display: 'block' }}>
+                Upload Lab Report (optional):
+                <input
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  onChange={e => setLabReportFile(e.target.files[0])}
+                  style={{ display: 'block', marginTop: 5 }}
+                />
+              </label>
               <br />
               <button type="submit" className="modal-submit-btn" >Upload & Complete</button>
             </form>

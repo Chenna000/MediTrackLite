@@ -22,7 +22,7 @@ public class PrescriptionService {
 	    @Autowired
 	    private AppointmentRepository appointmentRepo;
 
-	    public String addPrescription(PrescriptionRequest request) {
+	    public String addPrescription(PrescriptionRequest request, String labReportsPath) {
 	        Appointment appointment = appointmentRepo.findById(request.getAppointmentId())
 	                .orElseThrow(() -> new RuntimeException("Appointment not found"));
 
@@ -34,6 +34,7 @@ public class PrescriptionService {
 	        prescriptions.forEach(p ->	{ 
 	        	p.setAppointment(appointment);
 	        	p.setConsultationNotes(request.getConsultationNotes());
+	        	p.setLabReportsPath(labReportsPath);
 	        	});
 	        prescriptionRepo.saveAll(prescriptions);
 
@@ -43,7 +44,7 @@ public class PrescriptionService {
 	        return "Prescriptions saved and appointment marked as COMPLETED.";
 	    }
 
-	// get All Prescription Detais 
+	    // get All Prescription Details 
 	    public List<PrescriptionDto> getPrescriptionByAppointmentId(Long appointmentId) {
 	    	System.out.println(prescriptionRepo.findByAppointmentId(appointmentId).getFirst());
 	    	List<Prescription> prescriptions = prescriptionRepo.findByAppointmentId(appointmentId);

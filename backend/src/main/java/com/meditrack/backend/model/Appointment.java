@@ -26,7 +26,15 @@ public class Appointment {
 	private String problemDescription;
 	private String status;
 	private LocalDateTime createdAt;
+	private String patientReportPath;
 	
+	
+	public String getPatientReportPath() {
+		return patientReportPath;
+	}
+	public void setPatientReportPath(String patientReportPath) {
+		this.patientReportPath = patientReportPath;
+	}
 	public String getPhoneNo() {
 		return phoneNo;
 	}
@@ -100,6 +108,23 @@ public class Appointment {
 		this.problemDescription = problemDescription;
 		this.status = status;
 		this.createdAt = createdAt;
+	}
+	
+	public Appointment(Long id, String doctorEmail, String doctorName, String patientEmail, LocalDate appointmentDate,
+			String slot, String phoneNo, String problemDescription, String status, LocalDateTime createdAt,
+			String patientReportPath) {
+		super();
+		this.id = id;
+		this.doctorEmail = doctorEmail;
+		this.doctorName = doctorName;
+		this.patientEmail = patientEmail;
+		this.appointmentDate = appointmentDate;
+		this.slot = slot;
+		this.phoneNo = phoneNo;
+		this.problemDescription = problemDescription;
+		this.status = status;
+		this.createdAt = createdAt;
+		this.patientReportPath = patientReportPath;
 	}
 	public Appointment() {
 		

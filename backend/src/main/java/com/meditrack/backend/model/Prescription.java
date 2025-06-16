@@ -25,10 +25,21 @@ public class Prescription {
     @JoinColumn(name = "appointment_id")
     private Appointment appointment;
     
+    
     @Column(length = 1000)
     private String consultationNotes;
     
+    private String labReportsPath;
     
+    
+	public String getLabReportsPath() {
+		return labReportsPath;
+	}
+
+	public void setLabReportsPath(String labReportsPath) {
+		this.labReportsPath = labReportsPath;
+	}
+
 	public String getConsultationNotes() {
 		return consultationNotes;
 	}
@@ -86,6 +97,19 @@ public class Prescription {
 		this.frequency = frequency;
 		this.appointment = appointment;
 		this.consultationNotes = consultationNotes;
+	}
+
+	
+	public Prescription(Long id, String medicineName, String dosageInstructions, String frequency,
+			Appointment appointment, String consultationNotes, String labReportsPath) {
+		super();
+		this.id = id;
+		this.medicineName = medicineName;
+		this.dosageInstructions = dosageInstructions;
+		this.frequency = frequency;
+		this.appointment = appointment;
+		this.consultationNotes = consultationNotes;
+		this.labReportsPath = labReportsPath;
 	}
 
 	public Prescription() {

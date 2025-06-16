@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.meditrack.backend.model.Appointment;
 import com.meditrack.backend.model.AppointmentRequest;
@@ -25,6 +26,9 @@ public class AppointmentService {
 
     @Autowired
     private UserRepository userRepo;
+    
+    @Autowired
+    private FileStorageService fileStorageService;
     
   
 
@@ -69,7 +73,7 @@ public class AppointmentService {
             .collect(Collectors.toList());
     }
 
-    public ResponseEntity<String> bookAppointment(AppointmentRequest request) {
+    public ResponseEntity<String> bookAppointment(AppointmentRequest request, MultipartFile reportFile) {
         String patientEmail = request.getPatientEmail();
         String doctorEmail = request.getDoctorEmail();
         LocalDate date = request.getAppointmentDate();
@@ -131,6 +135,11 @@ public class AppointmentService {
         app.setProblemDescription(problem.trim());
         app.setStatus("PENDING");
         app.setCreatedAt(LocalDateTime.now());
+        
+        if(reportFile != null && !reportFile.isEmpty()) {
+        	String filePath = fileStorageService.saveFile(reportFile);
+        	app.setPatientReportPath(filePath);
+        }
 
         appointmentRepo.save(app);
         return ResponseEntity.ok("Appointment booked successfully.");

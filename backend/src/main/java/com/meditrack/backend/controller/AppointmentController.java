@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,7 +15,9 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.meditrack.backend.model.Appointment;
 import com.meditrack.backend.model.AppointmentRequest;
@@ -38,9 +41,17 @@ public class AppointmentController {
         return appointmentService.getAvailableSlots(doctorEmail, LocalDate.parse(date));
     }
 
-    @PostMapping
-    public ResponseEntity<String> bookAppointment(@RequestBody AppointmentRequest request) {
-        return appointmentService.bookAppointment(request);
+//    @PostMapping
+//    public ResponseEntity<String> bookAppointment(@RequestBody AppointmentRequest request) {
+//        return appointmentService.bookAppointment(request);
+//    }
+    
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<String> bookAppointment(
+        @RequestPart("data") AppointmentRequest request,
+        @RequestPart(value = "report", required = false) MultipartFile reportFile
+    ) {
+        return appointmentService.bookAppointment(request, reportFile);
     }
 
     @GetMapping("/patient")

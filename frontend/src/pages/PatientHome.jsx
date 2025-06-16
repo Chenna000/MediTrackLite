@@ -34,6 +34,7 @@ const PatientHome = () => {
     problemDescription: '',
   });
   const [bookMsg, setBookMsg] = useState('');
+  const [reportFile, setReportFile] = useState(null);
 
   // Profile & Password modal state
   const [showProfile, setShowProfile] = useState(false);
@@ -138,7 +139,7 @@ const PatientHome = () => {
       .catch(() => setSlots([]));
   }, [date, bookForm.doctorEmail]);
 
-  // Booking handler
+  // Booking handler with file upload
   const handleBook = async (e) => {
     e.preventDefault();
     setBookMsg('');
@@ -149,7 +150,8 @@ const PatientHome = () => {
     }
 
     try {
-      const res = await API.post('/appointments', {
+      const formData = new FormData();
+      const appointmentRequest = {
         doctorEmail,
         doctorName,
         slot,
@@ -158,6 +160,14 @@ const PatientHome = () => {
         appointmentDate: date,
         specialization: selectedSpecialization,
         patientEmail: user.email,
+      };
+      formData.append('data', new Blob([JSON.stringify(appointmentRequest)], { type: 'application/json' }));
+      if (reportFile) {
+        formData.append('report', reportFile);
+      }
+
+      const res = await API.post('/appointments', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
       setBookMsg(res.data);
       fetchAppointments(user.email);
@@ -170,6 +180,7 @@ const PatientHome = () => {
         phoneNo: '',
         problemDescription: '',
       });
+      setReportFile(null);
     } catch (err) {
       setBookMsg(err.response?.data || 'Something went wrong. Please try again.');
     }
@@ -271,6 +282,12 @@ const PatientHome = () => {
   const filteredAppointments = appointments.filter(appt =>
     selectedStatus === 'ALL' ? true : appt.status === selectedStatus
   );
+
+  // Download report handler for completed appointments
+  const handleDownloadReport = (patientReportPath) => {
+    if (!patientReportPath) return;
+    window.open(`http://localhost:8080/files/download/${encodeURIComponent(patientReportPath)}`, '_blank');
+  };
 
   return (
     <div>
@@ -380,6 +397,15 @@ const PatientHome = () => {
               />
             </div>
 
+            <div className="form-row">
+              <label>Upload Report (optional):</label>
+              <input
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                onChange={e => setReportFile(e.target.files[0])}
+              />
+            </div>
+
             <button type="submit">Book</button>
           </form>
           {bookMsg && (
@@ -419,6 +445,14 @@ const PatientHome = () => {
                     <p><strong>Time:</strong> {appt.slot}</p>
                     <p><strong>Doctor:</strong> {appt.doctorName}</p>
                     <p><strong>Status:</strong> {appt.status}</p>
+                    {appt.status === 'COMPLETED' && appt.patientReportPath && (
+                      <button
+                        style={{ marginRight: 8, backgroundColor: '#607d8b', color: 'white' }}
+                        onClick={() => handleDownloadReport(appt.patientReportPath)}
+                      >
+                        Download Lab Report
+                      </button>
+                    )}
                     {appt.status !== '' && (
                       <button onClick={() => navigate(`/print/${appt.id}`)}> View & Print</button>
                     )}
@@ -476,6 +510,5 @@ const PatientHome = () => {
       )}
     </div>
   );
-};
-
+}
 export default PatientHome;
