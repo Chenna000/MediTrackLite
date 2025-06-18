@@ -14,6 +14,8 @@ const DoctorHome = () => {
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
+    const [showChangePassword, setShowChangePassword] = useState(false);
+  
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -100,21 +102,23 @@ const DoctorHome = () => {
 
   const handleChangePassword = async (e) => {
     e.preventDefault();
+    setError('');
+    setSuccess('');
     if (!oldPassword || !newPassword || !confirmNewPassword) {
       setError('All fields are required.');
       return;
     }
     if (newPassword !== confirmNewPassword) {
-      setError('Passwords do not match.');
+      setError('New passwords do not match.');
       return;
     }
-
     try {
       await API.post('/api/auth/change-password', { oldPassword, newPassword });
-      setSuccess('Password changed successfully.');
+      alert('Password changed successfully!');
+      setShowChangePassword(false);
       navigate('/login');
     } catch (err) {
-      setError('Failed to change password');
+      setError(err.response?.data || 'Failed to change password.');
     }
   };
 
