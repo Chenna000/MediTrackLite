@@ -25,6 +25,9 @@ const DoctorHome = () => {
   });
   const [prescriptionError, setPrescriptionError] = useState('');
   const [prescriptionSuccess, setPrescriptionSuccess] = useState('');
+  const [labReportFile, setLabReportFile] = useState(null);
+
+  const [showCenterAlert, setShowCenterAlert] = useState(false);
 
   const API = axios.create({
     baseURL: 'http://localhost:8080',
@@ -63,6 +66,7 @@ const DoctorHome = () => {
       window.removeEventListener('mousemove', resetInactivityTimer);
       window.removeEventListener('keydown', resetInactivityTimer);
     };
+    // eslint-disable-next-line
   }, []);
 
   const loadAppointments = async (email) => {
@@ -120,6 +124,9 @@ const DoctorHome = () => {
       medicines: [{ medicineName: '', dosageInstructions: '', frequency: '' }],
       consultationNotes: '',
     });
+    setLabReportFile(null);
+    setPrescriptionError('');
+    setPrescriptionSuccess('');
     setShowPrescriptionForm(true);
   };
 
@@ -133,10 +140,24 @@ const DoctorHome = () => {
     }
 
     try {
-      await API.post('/prescriptions/upload', { appointmentId, prescriptions: medicines, consultationNotes });
+      const formData = new FormData();
+      const prescriptionRequest = {
+        appointmentId,
+        prescriptions: medicines,
+        consultationNotes,
+      };
+      formData.append('data', new Blob([JSON.stringify(prescriptionRequest)], { type: 'application/json' }));
+      if (labReportFile) {
+        formData.append('labReport', labReportFile);
+      }
+      await API.post('/prescriptions/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
       setPrescriptionSuccess('Uploaded successfully.');
+      setShowCenterAlert(true);
       setShowPrescriptionForm(false);
       loadAppointments(user.email);
+      setTimeout(() => setShowCenterAlert(false), 1000);
     } catch {
       setPrescriptionError('Failed to upload prescription.');
     }
@@ -166,6 +187,12 @@ const DoctorHome = () => {
   const filteredAppointments = appointments.filter(app =>
     statusFilter === 'ALL' ? true : app.status === statusFilter
   );
+
+  // Download report handler for completed appointments
+  const handleDownloadReport = (labReportsPath) => {
+    if (!labReportsPath) return;
+    window.open(`http://localhost:8080/files/download/${encodeURIComponent(labReportsPath)}`, '_blank');
+  };
 
   return (
     <div className="doctor-dashboard-container">
@@ -204,6 +231,15 @@ const DoctorHome = () => {
                     <p><strong>Time:</strong> {app.slot}</p>
                     <p><strong>Issue:</strong> {app.problemDescription}</p>
 
+                    {app.status === 'PENDING' && app.patientReportPath && (
+                      <button
+                        style={{ marginBottom: 8, backgroundColor: '#607d8b', color: 'white' }}
+                        onClick={() => handleDownloadReport(app.patientReportPath)}
+                      >
+                        Download Report
+                      </button>
+                    )}
+
                     {app.status === 'PENDING' && (
                       <>
                         <button onClick={() => handleStatus(app.id, 'ACCEPTED')}>✔ Accept</button>
@@ -217,7 +253,17 @@ const DoctorHome = () => {
                       <button onClick={() => openPrescriptionForm(app.id)}>Upload Prescription</button>
                     )}
                     {app.status === 'COMPLETED' && (
-                      <button onClick={() => navigate(`/print/${app.id}`)}>Print</button>
+                      <>
+                        {app.labReportsPath && (
+                          <button
+                            style={{ marginRight: 8, backgroundColor: '#607d8b', color: 'white' }}
+                            onClick={() => handleDownloadReport(app.labReportsPath)}
+                          >
+                            Download Lab Report
+                          </button>
+                        )}
+                        <button onClick={() => navigate(`/print/${app.id}`)}>Print</button>
+                      </>
                     )}
                   </div>
                 ))}
@@ -240,39 +286,77 @@ const DoctorHome = () => {
       </div>
 
       {showPrescriptionForm && (
-  <div className="modal-overlay" onClick={() => setShowPrescriptionForm(false)}>
-    <div className="modal" onClick={e => e.stopPropagation()}>
-      <h3>Upload Prescription</h3>
-      {prescriptionError && <p className="error">{prescriptionError}</p>}
-      {prescriptionSuccess && <p className="success">{prescriptionSuccess}</p>}
-      
-      <form onSubmit={handlePrescriptionSubmit}>
-        <div className="medicine-list">
-          {prescriptionForm.medicines.map((m, i) => (
-            <div key={i} className="medicine-row">
-              <input name="medicineName" placeholder="Name" value={m.medicineName} onChange={e => handleMedicineChange(i, e)} />
-              <input name="dosageInstructions" placeholder="Dosage" value={m.dosageInstructions} onChange={e => handleMedicineChange(i, e)} />
-              <input name="frequency" placeholder="Frequency" value={m.frequency} onChange={e => handleMedicineChange(i, e)} />
-              {prescriptionForm.medicines.length > 1 && (
-                <button type="button" className="red-button" onClick={() => removeMedicineRow(i)}>Remove</button>
-              )}
-            </div>
-          ))}
+        <div className="modal-overlay" onClick={() => setShowPrescriptionForm(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxHeight: '80vh', overflowY: 'auto' }}>
+            <h3>Upload Prescription</h3>
+            {prescriptionError && <p className="error">{prescriptionError}</p>}
+            {prescriptionSuccess && <p className="success">{prescriptionSuccess}</p>}
+            
+            <form onSubmit={handlePrescriptionSubmit}>
+              <div className="medicine-list">
+                {prescriptionForm.medicines.map((m, i) => (
+                  <div key={i} className="medicine-row">
+                    <input name="medicineName" placeholder="Name" value={m.medicineName} onChange={e => handleMedicineChange(i, e)} />
+                    <input name="dosageInstructions" placeholder="Dosage" value={m.dosageInstructions} onChange={e => handleMedicineChange(i, e)} />
+                    <input name="frequency" placeholder="Frequency" value={m.frequency} onChange={e => handleMedicineChange(i, e)} />
+                    {prescriptionForm.medicines.length > 1 && (
+                      <button type="button" className="red-button" onClick={() => removeMedicineRow(i)}>Remove</button>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <button type="button" className="add-button" onClick={addMedicineRow}>+ Add Medicine</button>
+
+              <textarea
+                placeholder="Consultation Notes"
+                value={prescriptionForm.consultationNotes}
+                onChange={e => setPrescriptionForm({ ...prescriptionForm, consultationNotes: e.target.value })}
+              ></textarea>
+
+              <label style={{ marginTop: 10, display: 'block' }}>
+                Upload Lab Report (optional):
+                <input
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  onChange={e => setLabReportFile(e.target.files[0])}
+                  style={{ display: 'block', marginTop: 5 }}
+                />
+              </label>
+
+              <button type="submit" className="submit-button">Submit</button>
+            </form>
+          </div>
         </div>
+      )}
 
-        <button type="button" className="add-button" onClick={addMedicineRow}>+ Add Medicine</button>
-
-        <textarea
-          placeholder="Consultation Notes"
-          value={prescriptionForm.consultationNotes}
-          onChange={e => setPrescriptionForm({ ...prescriptionForm, consultationNotes: e.target.value })}
-        ></textarea>
-
-        <button type="submit" className="submit-button">Submit</button>
-      </form>
-    </div>
-  </div>
-)}
+      {showCenterAlert && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.2)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          <div
+            style={{
+              background: '#fff',
+              padding: '32px 48px',
+              borderRadius: '12px',
+              boxShadow: '0 2px 16px rgba(0,0,0,0.15)',
+              fontSize: '1.2rem',
+              color: '#333',
+              textAlign: 'center'
+            }}
+          >
+            Prescription uploaded successfully.
+          </div>
+        </div>
+      )}
 
     </div>
   );
