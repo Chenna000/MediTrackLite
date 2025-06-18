@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { Carousel } from 'react-bootstrap';
-import '/home/lenovo/NetBeansProjects/MediTrackLite/frontend/src/css/HomePage.css';
+import './../css/HomePage.css';
 
 const HomePage = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);

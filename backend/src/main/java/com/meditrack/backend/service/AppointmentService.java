@@ -84,17 +84,21 @@ public class AppointmentService {
         if (userRepo.findByEmail(doctorEmail).isEmpty()) {
             return ResponseEntity.badRequest().body("Doctor is not registered.");
         }
+        
+        if (date.isBefore(LocalDate.now())) {
+            return ResponseEntity.badRequest().body("You cannot book appointment for past days.");
+        }
 
+        if (date.isBefore(LocalDate.now())) {
+            return ResponseEntity.badRequest().body("You cannot book appointment for past days.");
+        }
+        
         // Max 2 appointments/day per patient
         long todayCount = appointmentRepo.countByPatientEmailAndAppointmentDate(patientEmail, date);
         if (todayCount >= 2) {
             return ResponseEntity.badRequest().body("You cannot book more than 2 appointments on the same day.");
         }
 
-        // Ensure booking only for next 7 days
-        if (date.isAfter(LocalDate.now().plusDays(7))) {
-            return ResponseEntity.badRequest().body("You can only book appointments within the next 7 days.");
-        }
 
         // Problem description validation
         String problem = request.getProblemDescription();
