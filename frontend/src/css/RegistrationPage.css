@@ -1,4 +1,4 @@
-
+/* Full page layout */
 .register-page {
   display: flex;
   justify-content: center;
@@ -6,73 +6,133 @@
   height: 100vh;
   width: 100vw;
   background: linear-gradient(135deg, #e0f2ff, #cce8ff);
+
   font-family: 'Segoe UI', sans-serif;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
+/* Frosted glass effect card */
 .register-card {
-  background-color: white;
-  padding: 30px 40px;
-  border-radius: 12px;
-  box-shadow: 0 0 20px rgba(0, 100, 200, 0.1);
+  background: rgba(231, 241, 245, 0.1);
+  padding: 40px 30px;
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(57, 107, 245, 0.2);
+  backdrop-filter: blur(26px);
+  -webkit-backdrop-filter: blur(6px);
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
   text-align: center;
+  color: #1568c7;
 }
 
+/* Heading */
 .register-card h2 {
-  margin-bottom: 20px;
-  color: #0077cc;
+  margin-bottom: 25px;
+  font-size: 24px;
+  font-weight: bold;
+  color: #1568c7;
 }
 
+/* Input and select */
 .register-card input,
 .register-card select {
   width: 100%;
-  padding: 10px;
-  margin: 8px 0;
-  border: 1px solid #0077cc;
-  border-radius: 6px;
-  outline: none;
-  transition: 0.2s;
-}
-
-.register-card input:focus,
-.register-card select:focus {
-  border-color: #005999;
-  box-shadow: 0 0 5px rgba(0, 119, 204, 0.3);
-}
-
-.register-card button {
-  background-color: #0077cc;
-  color: white;
+  padding: 12px 16px;
+  margin-bottom: 18px;
   border: none;
-  padding: 12px 24px;
-  margin-top: 10px;
-  border-radius: 6px;
-  cursor: pointer;
+  border-radius: 10px;
+  font-size: 15px;
+  background: rgba(255, 255, 255, 0.85);
+  color: #1568c7;
+}
+
+.register-card input::placeholder {
+  color: #666;
+}
+
+.register-card select:focus,
+.register-card input:focus {
+  outline: none;
+  box-shadow: 0 0 25px rgba(18, 118, 233, 0.3);
+}
+
+/* Dual curtain animation button */
+.register-card button {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  padding: 14px;
+  background-color: #1568c7;
+  color: #ecf2f8;
+  border: none;
+  border-radius: 10px;
   font-size: 16px;
-  transition: background-color 0.3s ease;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.4s ease;
+  z-index: 1;
 }
 
+.register-card button::before,
+.register-card button::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 50%;
+  background: #4496f3;
+  z-index: -1;
+  transition: all 0.4s ease;
+}
+
+/* Left sweep */
+.register-card button::before {
+  left: -50%;
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 10px;
+}
+
+/* Right sweep */
+.register-card button::after {
+  right: -50%;
+  border-top-right-radius: 10px;
+  border-bottom-right-radius: 10px;
+}
+
+/* On hover sweep inward */
+.register-card button:hover::before {
+  left: 0;
+}
+
+.register-card button:hover::after {
+  right: 0;
+}
+
+/* Change text color on hover */
 .register-card button:hover {
-  background-color: #005999;
+  color: #fff;
 }
 
+/* Additional messages and links */
 .register-card p {
   margin-top: 15px;
   font-size: 14px;
 }
 
 .register-card a {
-  color: #0077cc;
+  color: #1568c7;
   text-decoration: none;
 }
 
 .register-card .error {
-  color: red;
+  color: #e74c3c;
   font-size: 14px;
+  margin-bottom: 10px;
 }
 
 .register-card .success {
-  color: green;
+  color: #27ae60;
   font-size: 14px;
+  margin-bottom: 10px;
 }

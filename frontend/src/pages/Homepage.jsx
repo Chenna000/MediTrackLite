@@ -1,80 +1,162 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import "./../css/Homepage.css";
-import 'bootstrap/dist/css/bootstrap.min.css';
-import 'bootstrap-icons/font/bootstrap-icons.css';
+import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Carousel } from 'react-bootstrap';
+import '/home/lenovo/NetBeansProjects/MediTrackLite/frontend/src/css/HomePage.css';
 
 const HomePage = () => {
-  const navigate = useNavigate();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const toggleMenu = () => {
+    setIsMenuOpen(prev => !prev);
+  };
 
   return (
-    <div className="home-container">
+    <div className="homepage-container">
       
-      <nav className="navbar navbar-expand-lg navbar-dark navbar-custom fixed-top">
-        <div className="container-fluid">
-          <a className="navbar-brand" href="#">
-            <img src="https://cdn-icons-png.flaticon.com/512/3771/3771518.png" alt="logo" />
-            MediTrack Lite
-          </a>
-          <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span className="navbar-toggler-icon"></span>
-          </button>
-          <div className="collapse navbar-collapse justify-content-end" id="navbarNav">
-            <ul className="navbar-nav">
-              <li className="nav-item"><a className="nav-link" href="#">Home</a></li>
-              <li className="nav-item"><a className="nav-link" onClick={() => navigate('/login')}>Login</a></li>
-              <li className="nav-item"><a className="nav-link" onClick={() => navigate('/register')}>Register</a></li>
-              <li className="nav-item"><a className="nav-link" href="#about">About Us</a></li>
-              <li className="nav-item"><a className="nav-link" href="#contact">Contact Us</a></li>
-            </ul>
-          </div>
+      {/* Navbar */}
+      <nav className="navbar">
+        <div className="navbar-logo">
+        <Link to="/"><img src="images/meditracklogo.png" alt="Health Illustration" /></Link> 
         </div>
+
+        {/* Hamburger icon visible only on mobile */}
+        <button className="hamburger" onClick={toggleMenu}>
+          &#9776;
+        </button>
+
+        <ul className={`navbar-links ${isMenuOpen ? 'active' : ''}`}>
+          <li><Link to="/">Home</Link></li>
+          <li><Link to="/login">Login</Link></li>
+          <li><Link to="/register">Register</Link></li>
+          <li><a href="#contact">Contact</a></li>
+        </ul>
       </nav>
 
-      <div className="quote">
-        <h2>"Empowering healthcare with technology – fast, secure, and reliable!"</h2>
-        <p className="mt-3">Your health in your hands, simplified for everyone</p>
-      </div>
 
-      {/* Feature Cards */}
-      <div className="card-container container">
-        <div className="info-card">
-          <h5>For Patients</h5>
-          <p>Easy appointment tracking, secure data, and real-time updates. Designed for all literacy levels with intuitive icons and simple language.</p>
+      {/* Hero Section */}
+      <section className="hero-section">
+        <div className="hero-content">
+          <h1>Welcome to MediTrack Lite</h1>
+          <p>Track your prescriptions and appointments with ease & security.</p>
+          <a href="/register" className="cta-button">Get Started</a>
         </div>
-        <div className="info-card">
-          <h5>For Doctors</h5>
-          <p>Instant access to patient data, secure login, and efficient workflow management. Spend more time with patients, less with paperwork.</p>
+        <div className="hero-image">
+         
         </div>
-        
-      </div>
+      </section>
 
-      {/* About Us */}
-      <div className="footer-section" id="about">
-        <h3>About Us</h3>
-        <p>
-          MediTrack Lite is a healthcare platform that bridges the gap between patients and doctors by offering an easy-to-use,
-          secure system to manage health data, appointments, and communication. Our mission is to make healthcare management
-          accessible to everyone, regardless of technical literacy.
-        </p>
-      </div>
+      {/* Features Section */}
+      <section className="features-section">
+        <h2 className="section-title">Core Features</h2>
+        <div className="features">
+          <div className="feature-card">
+            <h3>Role-Based Access</h3>
+            <p>Separate dashboards for Doctors & Patients, with secure login.</p>
+          </div>
+          <div className="feature-card">
+            <h3>Real-time Scheduling</h3>
+            <p>Book, view, and manage appointments instantly.</p>
+          </div>
+          <div className="feature-card">
+            <h3>Prescription Tracker</h3>
+            <p>Access past prescriptions anytime from your account.</p>
+          </div>
+        </div>
+      </section>
 
-      {/* Contact Us */}
-      <div className="footer-section" id="contact">
-        <h3>Contact Us</h3>
-        <p>Email: support@meditrack.local</p>
-        <p>Phone: +91-6281185068</p>
-        <p>Address: 123 MediTrack Street, Bangalore, India</p>
-      </div>
+    {/* How MediTrack Helps You – Stylish Cards */}
+<section className="meditrack-help-section">
+  <h2 className="section-title">How MediTrack Helps You</h2>
+  <div className="help-cards">
+    <div className="help-card">
+      <img src="https://cdn-icons-png.flaticon.com/512/295/295128.png" alt="Book Appointments" />
+      <h3>📅 Book Appointments</h3>
+      <p>Choose from available slots and consult verified doctors quickly.</p>
+    </div>
+    <div className="help-card">
+      <img src="https://cdn-icons-png.flaticon.com/512/4697/4697246.png" alt="Track Prescriptions" />
+      <h3>💊 Track Prescriptions</h3>
+      <p>Instant access to your medical prescriptions — organized and secure.</p>
+    </div>
+    <div className="help-card">
+      <img src="https://cdn-icons-png.flaticon.com/512/3460/3460320.png" alt="Secure Data" />
+      <h3>🔒 Secure Health Data</h3>
+      <p>Your personal health records are protected with top-grade encryption.</p>
+    </div>
+  </div>
+</section>
 
-      {/* Social Footer */}
-      <div className="social-footer">
-        <p>Follow Us:</p>
-        <a href="https://github.com/your-profile" target="_blank" rel="noopener noreferrer"><i className="bi bi-github"></i></a>
-        <a href="https://linkedin.com/in/your-profile" target="_blank" rel="noopener noreferrer"><i className="bi bi-linkedin"></i></a>
-        <a href="https://twitter.com/your-profile" target="_blank" rel="noopener noreferrer"><i className="bi bi-twitter"></i></a>
-        <p className="mt-3">&copy; 2025 MediTrack Lite. All rights reserved.</p>
-      </div>
+{/* How It Works - Enhanced */}
+<section className="how-it-works-enhanced">
+  <h2 className="section-title">How It Works</h2>
+  <div className="how-steps">
+    <div className="how-step-card">
+      <span className="step-number">1</span>
+      <h4>Register</h4>
+      <p>Create your account as a Doctor or Patient with a valid email.</p>
+    </div>
+    <div className="how-step-card">
+      <span className="step-number">2</span>
+      <h4>Login</h4>
+      <p>Access your dashboard securely and start using features tailored to your role.</p>
+    </div>
+    <div className="how-step-card">
+      <span className="step-number">3</span>
+      <h4>Manage Health</h4>
+      <p>Patients can book appointments and view prescriptions. Doctors manage visits and reports.</p>
+    </div>
+  </div>
+</section>
+
+
+      {/* FAQ Section */}
+      <section className="faq-section">
+        <h2 className="section-title">Frequently Asked Questions</h2>
+        <div className="faq">
+          <div className="faq-item">
+            <h4>Is MediTrack Lite free to use?</h4>
+            <p>Yes, it’s completely free for patients. Doctors can sign up as well.</p>
+          </div>
+          <div className="faq-item">
+            <h4>How secure is my data?</h4>
+            <p>We use modern security protocols including encryption and session control.</p>
+          </div>
+          <div className="faq-item">
+            <h4>Can I reschedule appointments?</h4>
+            <p>Yes! Patients can request a new time if available.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="testimonials-section">
+        <h2 className="section-title">What Our Users Say</h2>
+        <div className="testimonials">
+          <div className="testimonial-card">
+            <p>“MediTrack Lite helped me book appointments for my parents easily!”</p>
+            <h4>– Priya, Daughter</h4>
+          </div>
+          <div className="testimonial-card">
+            <p>“I love how I can track my patient’s history without digging papers.”</p>
+            <h4>– Dr. Arjun Rao</h4>
+          </div>
+          <div className="testimonial-card">
+            <p>“The interface is simple and clean. Perfect for elders too.”</p>
+            <h4>– Ravi, Patient</h4>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="footer" id="contact">
+        <p>© 2025 MediTrack Lite | Made with ❤️ for healthcare</p>
+        <div className="footer-links">
+          <a href="#privacy">Privacy</a>
+          <a href="#terms">Terms</a>
+          <a href="#contact">Contact</a>
+        </div>
+      </footer>
     </div>
   );
 };
