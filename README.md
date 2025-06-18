@@ -24,7 +24,7 @@ This project was built using **React (Vite)** for the frontend and **Spring Boot
 ### Database
 - MYSQL
 
-## 🔑 Features
+## 🔑 Key Features
 
 ### 👤 Authentication
 - Secure login/logout with session-based access
@@ -34,18 +34,19 @@ This project was built using **React (Vite)** for the frontend and **Spring Boot
 
 ### 🩺 Patient Module
 - Book appointments by selecting specialization, doctor, date, and slot
+- Contact hospital on Whatsapp for queries
 - Add phone number and problem description (max 200 chars)
 - View booked appointments in reverse chronological order
 - Print appointment confirmation
 - See prescription after appointment is completed
-- Optionally upload medical reports for easier consultation
+- Optionally upload medical reports for easier consultation 
 
 ### 👨‍⚕️ Doctor Module
 - View appointments split into **Pending** and **Accepted**
 - Accept or Reject pending appointments
 - Print accepted appointment details
 - Add prescriptions after appointment is in progress
-- Mark appointment status: `IN_PROGRESS` → `COMPLETED`
+- Follow up patients via Whatsapp
 - Otionally upload lab reports during prescription upload
 
 ### 💊 Prescription Management
