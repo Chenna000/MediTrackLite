@@ -270,6 +270,14 @@ const PatientHome = () => {
           <button onClick={() => setActiveTab('bookings')}>My Bookings</button>
           <button onClick={() => setActiveTab('book')}>Book Appointment</button>
           <button onClick={handleOpenChangePassword}>Change Password</button>
+          <button
+    className="whatsapp-button"
+    onClick={() => window.open('https://wa.me/919177524378?text=Hello%20Hospital%20Team', '_blank')}
+    style={{ backgroundColor: '#25D366', color: 'white' }}
+  >
+    <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" style={{ width: 20, marginRight: 8, verticalAlign: 'middle' }} />
+    Chat with Hospital
+  </button>
           <button className="red-button" onClick={() => handleLogout(false)}>Logout</button>
         </div>
       </div>

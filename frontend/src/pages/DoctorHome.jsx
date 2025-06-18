@@ -267,6 +267,25 @@ const DoctorHome = () => {
                           </button>
                         )}
                         <button onClick={() => navigate(`/print/${app.id}`)}>Print</button>
+                        {app.phoneNo && (
+  <button
+    className="whatsapp-button"
+    style={{ backgroundColor: '#25D366', color: 'white', margin: '8px 0' }}
+    onClick={() =>
+      window.open(
+        `https://wa.me/${app.phoneNo}?text=Hello%20this%20is%20Dr.%20${user?.name}%20regarding%20your%20appointment.`,
+        '_blank'
+      )
+    }
+  >
+    <img
+      src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg"
+      alt="WhatsApp"
+      style={{ width: 20, marginRight: 8, verticalAlign: 'middle' }}
+    />
+    WhatsApp Patient
+  </button>
+)}
                       </>
                     )}
                   </div>
