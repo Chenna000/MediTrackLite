@@ -14,7 +14,7 @@ const DoctorHome = () => {
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
-    const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
   
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
