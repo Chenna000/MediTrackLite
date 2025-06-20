@@ -44,3 +44,18 @@ CREATE TABLE `prescription` (
         FOREIGN KEY (`appointment_id`)
         REFERENCES `appointments` (`id`)
 );
+
+-- Create Feedback table
+CREATE TABLE `feedback` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `comment` VARCHAR(150) DEFAULT NULL,
+    `rating` INT NOT NULL,
+    `appointment_id` BIGINT NOT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `UK_feedback_appointment` (`appointment_id`),
+    KEY `FK_feedback_appointment` (`appointment_id`),
+    CONSTRAINT `FK_feedback_appointment`
+        FOREIGN KEY (`appointment_id`)
+        REFERENCES `appointments` (`id`)
+);
+
