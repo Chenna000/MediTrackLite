@@ -29,6 +29,11 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     
     List<Appointment> findByStatus(String status);
     
+    List<Appointment> findByAppointmentDateBefore(LocalDate cutoffDate);
+    
+    List<Appointment> findByDoctorEmail(String doctorEmail);
+
+    
     List<Appointment> findByDoctorEmailAndStatusOrderByAppointmentDateDesc(String doctorEmail, String status);
     
     @Query("SELECT a FROM Appointment a WHERE a.status = 'ACCEPTED' AND a.appointmentDate <= :today")

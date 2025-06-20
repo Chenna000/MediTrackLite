@@ -3,6 +3,11 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import './../css/DoctorHome.css';
 
+const ANALYTICS_API = axios.create({
+  baseURL: 'http://localhost:8080/analytics',
+  withCredentials: true,
+});
+
 const DoctorHome = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -35,6 +40,10 @@ const DoctorHome = () => {
   const [doctorFeedback, setDoctorFeedback] = useState([]);
   const [averageRating, setAverageRating] = useState(null);
 
+  // Doctor analytics state
+  const [doctorAnalytics, setDoctorAnalytics] = useState(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+
   const API = axios.create({
     baseURL: 'http://localhost:8080',
     withCredentials: true,
@@ -58,6 +67,7 @@ const DoctorHome = () => {
           loadAppointments(res.data.email);
           fetchDoctorFeedback(res.data.email);
           fetchAverageRating(res.data.email);
+          fetchDoctorAnalytics(res.data.email);
         }
       } catch {
         navigate('/login');
@@ -104,6 +114,18 @@ const DoctorHome = () => {
     } catch (err) {
       setAverageRating(null);
     }
+  };
+
+  // Fetch doctor analytics
+  const fetchDoctorAnalytics = async (email) => {
+    setAnalyticsLoading(true);
+    try {
+      const res = await ANALYTICS_API.get(`/doctor-analytics?email=${encodeURIComponent(email)}`);
+      setDoctorAnalytics(res.data);
+    } catch {
+      setDoctorAnalytics(null);
+    }
+    setAnalyticsLoading(false);
   };
 
   const handleStatus = async (id, status) => {
@@ -243,6 +265,147 @@ const DoctorHome = () => {
   // Filter completed appointments for feedback display
   const completedAppointments = appointments.filter(app => app.status === 'COMPLETED');
 
+  // Visualization for analytics (pie chart for medicines, bar for patient count, etc.)
+  const renderAnalytics = () => {
+    if (analyticsLoading) {
+      return <div style={{ margin: 24, textAlign: 'center' }}>Loading analytics...</div>;
+    }
+    if (!doctorAnalytics) {
+      return <div style={{ margin: 24, textAlign: 'center', color: '#888' }}>No analytics data found.</div>;
+    }
+
+    // Pie chart for most prescribed medicines
+    const meds = doctorAnalytics.mostPrescribedMeds || {};
+    const medsArr = Object.entries(meds);
+    const totalMeds = medsArr.reduce((sum, [, count]) => sum + count, 0);
+
+    // Feedback analytics
+    const feedbacks = doctorFeedback || [];
+    const feedbackCount = feedbacks.length;
+    const avgRating = averageRating || 0;
+    const ratingDist = [0, 0, 0, 0, 0];
+    feedbacks.forEach(fb => {
+      if (fb.rating >= 1 && fb.rating <= 5) ratingDist[fb.rating - 1]++;
+    });
+
+    // Simple pie chart using SVG
+    let startAngle = 0;
+    const pieColors = ['#1976d2', '#43a047', '#fbc02d', '#e53935', '#8e24aa', '#00897b', '#f57c00', '#6d4c41'];
+    const pieSlices = medsArr.map(([name, count], idx) => {
+      const angle = (count / totalMeds) * 360;
+      const largeArc = angle > 180 ? 1 : 0;
+      const x1 = 100 + 90 * Math.cos((Math.PI * startAngle) / 180);
+      const y1 = 100 + 90 * Math.sin((Math.PI * startAngle) / 180);
+      const x2 = 100 + 90 * Math.cos((Math.PI * (startAngle + angle)) / 180);
+      const y2 = 100 + 90 * Math.sin((Math.PI * (startAngle + angle)) / 180);
+      const path = `
+        M100,100
+        L${x1},${y1}
+        A90,90 0 ${largeArc} 1 ${x2},${y2}
+        Z
+      `;
+      const slice = (
+        <path
+          key={name}
+          d={path}
+          fill={pieColors[idx % pieColors.length]}
+          stroke="#fff"
+          strokeWidth="2"
+        >
+          <title>{name}: {count}</title>
+        </path>
+      );
+      startAngle += angle;
+      return slice;
+    });
+
+    // Bar chart for feedback rating distribution
+    const maxDist = Math.max(...ratingDist, 1);
+    return (
+      <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap', marginTop: 24 }}>
+        <div style={{
+          background: '#fff',
+          borderRadius: 12,
+          boxShadow: '0 2px 12px rgba(25, 118, 210, 0.08)',
+          padding: 24,
+          minWidth: 320,
+          flex: 1
+        }}>
+          <h3 style={{ marginBottom: 16 }}>Doctor Analytics</h3>
+          <div style={{ marginBottom: 12 }}>
+            <strong>Total Unique Patients:</strong> <span style={{ color: '#1976d2', fontSize: 20 }}>{doctorAnalytics.patientCount}</span>
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <strong>Average Consultation Time:</strong> <span style={{ color: '#43a047', fontSize: 18 }}>{doctorAnalytics.averageConsultationTime} min</span>
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <strong>Most Prescribed Medicines:</strong>
+            {medsArr.length === 0 ? (
+              <div style={{ color: '#888', marginTop: 6 }}>No prescriptions yet.</div>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', marginTop: 12 }}>
+                <svg width="200" height="200" viewBox="0 0 200 200">
+                  {pieSlices}
+                </svg>
+                <ul style={{ marginLeft: 16, listStyle: 'none', padding: 0 }}>
+                  {medsArr.map(([name, count], idx) => (
+                    <li key={name} style={{ marginBottom: 6, display: 'flex', alignItems: 'center' }}>
+                      <span style={{
+                        display: 'inline-block',
+                        width: 16,
+                        height: 16,
+                        background: pieColors[idx % pieColors.length],
+                        borderRadius: '50%',
+                        marginRight: 8
+                      }}></span>
+                      <span>{name}: <b>{count}</b></span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </div>
+        {/* Feedback Analytics Visualization */}
+        <div style={{
+          background: '#fff',
+          borderRadius: 12,
+          boxShadow: '0 2px 12px rgba(25, 118, 210, 0.08)',
+          padding: 24,
+          minWidth: 320,
+          flex: 1
+        }}>
+          <h3 style={{ marginBottom: 16 }}>Feedback Analytics</h3>
+          <div style={{ marginBottom: 12 }}>
+            <strong>Total Feedbacks:</strong> <span style={{ color: '#1976d2', fontSize: 20 }}>{feedbackCount}</span>
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <strong>Average Rating:</strong> <span style={{ color: '#ffc107', fontSize: 20 }}>{avgRating ? avgRating.toFixed(2) : '0.00'} ★</span>
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <strong>Rating Distribution:</strong>
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, marginTop: 100, height: 80 }}>
+              {ratingDist.map((count, idx) => (
+                <div key={idx} style={{ textAlign: 'center', flex: 1 }}>
+                  <div style={{
+                    background: '#1976d2',
+                    height: `${(count / maxDist) * 20}px`,
+                    width: 18,
+                    margin: '0 auto',
+                    borderRadius: 4,
+                    transition: 'height 0.3s'
+                  }} title={`${idx + 1} Star: ${count}`}></div>
+                  <div style={{ fontSize: 18, color: '#ffc107', marginTop: 4 }}>{'★'.repeat(idx + 1)}</div>
+                  <div style={{ fontSize: 13, color: '#333' }}>{count}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="doctor-dashboard-container">
       <h2 className="dashboard-title">Welcome Dr. {user?.name}</h2>
@@ -255,6 +418,7 @@ const DoctorHome = () => {
           <p>{user?.email}</p>
           <button onClick={() => setView('appointments')}>Appointments</button>
           <button onClick={() => setView('feedback')}>Feedback</button>
+          <button onClick={() => setView('analytics')}>Analytics</button>
           <button onClick={() => setView('password')}>Change Password</button>
           <button className="red-button" onClick={() => handleLogout(false)}>Logout</button>
         </div>
@@ -409,6 +573,12 @@ const DoctorHome = () => {
                 )}
               </div>
             </>
+          )}
+
+          {view === 'analytics' && (
+            <div style={{ width: '100%' }}>
+              {renderAnalytics()}
+            </div>
           )}
 
           {view === 'password' && (

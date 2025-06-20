@@ -18,6 +18,9 @@ frontend/.env
 backend/target/
 backend/.env
 backend/.mvn/wrapper/maven-wrapper.jar
+backend/uploads/
+# Exclude Maven wrapper jar file
+backend/.mvn/wrapper/maven-wrapper.properties
 
 # Exclude nested build/target folders except source ones
 !**/src/main/**/build/

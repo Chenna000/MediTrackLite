@@ -8,7 +8,11 @@ const API = axios.create({
   withCredentials: true,
 });
 
-// Only these statuses, no ALL
+const ANALYTICS_API = axios.create({
+  baseURL: 'http://localhost:8080/analytics',
+  withCredentials: true,
+});
+
 const STATUS_LABELS = {
   PENDING: 'Pending',
   ACCEPTED: 'Accepted',
@@ -18,7 +22,6 @@ const STATUS_LABELS = {
 };
 const STATUS_LIST = Object.entries(STATUS_LABELS).map(([value, label]) => ({ value, label }));
 
-// FeedbackForm component
 const FeedbackForm = ({ appointmentId, onFeedbackSubmit }) => {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
@@ -28,7 +31,6 @@ const FeedbackForm = ({ appointmentId, onFeedbackSubmit }) => {
   const [success, setSuccess] = useState('');
   const [existingFeedback, setExistingFeedback] = useState(null);
 
-  // Check if feedback already exists for this appointment
   useEffect(() => {
     setLoading(true);
     API
@@ -150,6 +152,137 @@ const FeedbackForm = ({ appointmentId, onFeedbackSubmit }) => {
   );
 };
 
+// Timeline with visualization
+const Timeline = ({ email }) => {
+  const [timeline, setTimeline] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!email) return;
+    setLoading(true);
+    ANALYTICS_API.get(`/patient-timeline?email=${encodeURIComponent(email)}`)
+      .then(res => {
+        setTimeline(res.data);
+        setLoading(false);
+      })
+      .catch(() => {
+        setTimeline([]);
+        setLoading(false);
+      });
+  }, [email]);
+
+  if (loading) {
+    return <div style={{ margin: 24, textAlign: 'center' }}>Loading timeline...</div>;
+  }
+
+  if (!timeline || timeline.length === 0) {
+    return <div style={{ margin: 24, textAlign: 'center', color: '#888' }}>No timeline data found.</div>;
+  }
+
+  // Visualization: vertical timeline with dots and lines
+  return (
+    <div style={{ margin: 24 }}>
+      <h3 style={{ marginBottom: 24, textAlign: 'center' }}>My Medical Timeline</h3>
+      <div style={{
+        position: 'relative',
+        marginLeft: 40,
+        marginRight: 40,
+        paddingLeft: 30,
+        borderLeft: '3px solid #1976d2',
+        minHeight: 100
+      }}>
+        {timeline.map((entry, idx) => (
+          <div key={idx} style={{
+            position: 'relative',
+            marginBottom: 40,
+            paddingLeft: 30,
+          }}>
+            {/* Dot */}
+            <div style={{
+              position: 'absolute',
+              left: -41,
+              top: 8,
+              width: 20,
+              height: 20,
+              borderRadius: '50%',
+              background: entry.status === 'COMPLETED' ? '#43a047' : '#1976d2',
+              border: '3px solid #fff',
+              boxShadow: '0 0 0 3px #1976d2',
+              zIndex: 2
+            }}></div>
+            {/* Card */}
+            <div style={{
+              background: '#fff',
+              borderRadius: 10,
+              boxShadow: '0 2px 12px rgba(25, 118, 210, 0.08)',
+              padding: 18,
+              minWidth: 260,
+              maxWidth: 600,
+              borderLeft: `6px solid ${entry.status === 'COMPLETED' ? '#43a047' : '#1976d2'}`,
+              position: 'relative'
+            }}>
+              <div style={{ marginBottom: 6, fontWeight: 600, fontSize: 16 }}>
+                {entry.date} <span style={{ color: '#888', fontWeight: 400 }}>({entry.slot})</span>
+              </div>
+              <div style={{ marginBottom: 6 }}>
+                <strong>Doctor:</strong> {entry.doctorName}
+              </div>
+              <div style={{ marginBottom: 6 }}>
+                <strong>Status:</strong> <span style={{ color: entry.status === 'COMPLETED' ? '#43a047' : '#1976d2' }}>{entry.status}</span>
+              </div>
+              {entry.report && (
+                <div style={{ marginBottom: 6 }}>
+                  <a
+                    href={`http://localhost:8080/files/download/${encodeURIComponent(entry.report)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: '#1976d2', textDecoration: 'underline' }}
+                  >
+                    Download Report
+                  </a>
+                </div>
+              )}
+              {entry.prescriptions && entry.prescriptions.length > 0 && (
+                <div style={{ marginTop: 8 }}>
+                  <strong>Prescriptions:</strong>
+                  <ul style={{ marginTop: 4, marginLeft: 18 }}>
+                    {entry.prescriptions.map((pres, i) => (
+                      <li key={i}>
+                        <span>
+                          <strong>Medicine:</strong> {pres.medicineName} &nbsp;
+                          <strong>Dosage:</strong> {pres.dosageInstructions} &nbsp;
+                          <strong>Frequency:</strong> {pres.frequency}
+                        </span>
+                        {pres.consultationNotes && (
+                          <div style={{ color: '#888', fontSize: 13, marginTop: 2 }}>
+                            Notes: {pres.consultationNotes}
+                          </div>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+            {/* Vertical line for all except last */}
+            {idx !== timeline.length - 1 && (
+              <div style={{
+                position: 'absolute',
+                left: -32,
+                top: 28,
+                width: 4,
+                height: 'calc(100% - 28px)',
+                background: '#1976d2',
+                zIndex: 1
+              }}></div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const PatientHome = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -170,11 +303,7 @@ const PatientHome = () => {
   const [bookMsg, setBookMsg] = useState('');
   const [reportFile, setReportFile] = useState(null);
 
-  // Profile & Password modal state
-  const [showProfile, setShowProfile] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
-  const [profile, setProfile] = useState(null);
-  const [profileError, setProfileError] = useState('');
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
@@ -182,11 +311,11 @@ const PatientHome = () => {
   const [passwordSuccess, setSuccess] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('PENDING');
   const [activeTab, setActiveTab] = useState('book');
-  // For completed section: which feedback tab is active
   const [completedTab, setCompletedTab] = useState('feedbacked');
+  const [showTimeline, setShowTimeline] = useState(false);
+
   let timeout;
 
-  // Fetch logged-in user details
   const fetchUser = async () => {
     try {
       const res = await API.get('/api/auth/me');
@@ -194,7 +323,6 @@ const PatientHome = () => {
       setUser(res.data);
       fetchAppointments(res.data.email);
     } catch (err) {
-      console.error('Session expired', err);
       navigate('/login');
     }
   };
@@ -207,12 +335,9 @@ const PatientHome = () => {
       );
       setAppointments(sorted);
       fetchFeedbacks(sorted);
-    } catch (err) {
-      console.error('Failed to fetch appointments', err);
-    }
+    } catch (err) {}
   };
 
-  // Fetch feedbacks for all completed appointments
   const fetchFeedbacks = async (appointmentsList) => {
     const completed = appointmentsList.filter(a => a.status === 'COMPLETED');
     if (completed.length === 0) {
@@ -227,9 +352,7 @@ const PatientHome = () => {
           if (res.data && typeof res.data === 'object' && res.data.id != null) {
             feedbacks[appt.id] = res.data;
           }
-        } catch {
-          // No feedback for this appointment
-        }
+        } catch {}
       })
     );
     setFeedbackMap(feedbacks);
@@ -318,7 +441,6 @@ const PatientHome = () => {
     setBookForm((prev) => ({ ...prev, slot: '' }));
   }, [date, bookForm.doctorEmail]);
 
-  // Booking handler with file upload
   const handleBook = async (e) => {
     e.preventDefault();
     setBookMsg('');
@@ -420,13 +542,11 @@ const PatientHome = () => {
     appt.status === selectedStatus
   );
 
-  // Download report handler for completed appointments
   const handleDownloadReport = (patientReportPath) => {
     if (!patientReportPath) return;
     window.open(`http://localhost:8080/files/download/${encodeURIComponent(patientReportPath)}`, '_blank');
   };
 
-  // Separate completed appointments into feedbacked and not feedbacked
   const completedAppointments = appointments.filter(a => a.status === 'COMPLETED');
   const feedbackedAppointments = completedAppointments.filter(a => feedbackMap[a.id]);
   const notFeedbackedAppointments = completedAppointments.filter(a => !feedbackMap[a.id]);
@@ -441,8 +561,9 @@ const PatientHome = () => {
           <p>{user?.role}</p>
         </div>
         <div className="button-group">
-          <button onClick={() => setActiveTab('bookings')}>My Bookings</button>
-          <button onClick={() => setActiveTab('book')}>Book Appointment</button>
+          <button onClick={() => { setActiveTab('bookings'); setShowTimeline(false); }}>My Bookings</button>
+          <button onClick={() => { setActiveTab('book'); setShowTimeline(false); }}>Book Appointment</button>
+          <button onClick={() => { setShowTimeline(true); setActiveTab('timeline'); }}>My Timeline</button>
           <button onClick={handleOpenChangePassword}>Change Password</button>
           <button
             className="whatsapp-button"
@@ -457,7 +578,9 @@ const PatientHome = () => {
       </div>
 
       <div className="right-box">
-        {activeTab === 'book' && (
+        {showTimeline ? (
+          <Timeline email={user?.email} />
+        ) : activeTab === 'book' ? (
           <>
             <h2>Book Appointment</h2>
             <form onSubmit={handleBook} className="booking-form">
@@ -536,9 +659,7 @@ const PatientHome = () => {
             </form>
             {bookMsg && <p className={bookMsg.toLowerCase().includes('success') ? 'modal-success' : 'modal-error'}>{bookMsg}</p>}
           </>
-        )}
-
-        {activeTab === 'bookings' && (
+        ) : activeTab === 'bookings' ? (
           <>
             <h3>My Appointments</h3>
             <div className="status-tabs">
@@ -678,7 +799,6 @@ const PatientHome = () => {
                         </button>
                       )}
                       <button onClick={() => navigate(`/print/${appt.id}`)}> View & Print</button>
-                      {/* Feedback form for completed appointments */}
                       {appt.status === 'COMPLETED' && (
                         <FeedbackForm appointmentId={appt.id} onFeedbackSubmit={() => fetchAppointments(user.email)} />
                       )}
@@ -687,7 +807,7 @@ const PatientHome = () => {
               </ul>
             )}
           </>
-        )}
+        ) : null}
       </div>
 
       {showChangePassword && (

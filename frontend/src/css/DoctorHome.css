@@ -75,7 +75,7 @@ body {
 
 .sidebar button {
   width: 100%;
-  background-color: #1565c0;
+  background-color: #2196f3;
   color: white;
   padding: 12px;
   border: none;
@@ -87,7 +87,7 @@ body {
 }
 
 .sidebar button:hover {
-  background-color: #0d47a1;
+  background-color: #2196f3;
 }
 
 /* Main Content Area */
