@@ -8,19 +8,153 @@ const API = axios.create({
   withCredentials: true,
 });
 
-const STATUS_LIST = [
-  { label: 'All', value: 'ALL' },
-  { label: 'Pending', value: 'PENDING' },
-  { label: 'Accepted', value: 'ACCEPTED' },
-  { label: 'Rejected', value: 'REJECTED' },
-  { label: 'In Progress', value: 'IN_PROGRESS' },
-  { label: 'Completed', value: 'COMPLETED' },
-];
+// Only these statuses, no ALL
+const STATUS_LABELS = {
+  PENDING: 'Pending',
+  ACCEPTED: 'Accepted',
+  REJECTED: 'Rejected',
+  IN_PROGRESS: 'In Progress',
+  COMPLETED: 'Completed',
+};
+const STATUS_LIST = Object.entries(STATUS_LABELS).map(([value, label]) => ({ value, label }));
+
+// FeedbackForm component
+const FeedbackForm = ({ appointmentId, onFeedbackSubmit }) => {
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [existingFeedback, setExistingFeedback] = useState(null);
+
+  // Check if feedback already exists for this appointment
+  useEffect(() => {
+    setLoading(true);
+    API
+      .get(`/feedback/appointment/${appointmentId}`)
+      .then((res) => {
+        if (
+          res.data &&
+          typeof res.data === 'object' &&
+          res.data.id != null
+        ) {
+          setExistingFeedback(res.data);
+          setSubmitted(true);
+        } else {
+          setExistingFeedback(null);
+          setSubmitted(false);
+        }
+        setLoading(false);
+      })
+      .catch(() => {
+        setExistingFeedback(null);
+        setSubmitted(false);
+        setLoading(false);
+      });
+  }, [appointmentId]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+    if (rating < 1 || rating > 5) {
+      setError('Please select a rating.');
+      return;
+    }
+    try {
+      await API.post('/feedback', {
+        appointmentId,
+        rating,
+        comment,
+      });
+      setSuccess('Thank you for your feedback!');
+      setSubmitted(true);
+      setExistingFeedback({ rating, comment });
+      if (onFeedbackSubmit) onFeedbackSubmit();
+    } catch {
+      setError('Failed to submit feedback. Please try again.');
+    }
+  };
+
+  if (loading) return null;
+
+  if (submitted && existingFeedback) {
+    return (
+      <div style={{ color: '#4caf50', marginTop: 8 }}>
+        <div>
+          <strong>Feedback already submitted for this appointment:</strong>
+        </div>
+        <div style={{ margin: '6px 0' }}>
+          <span style={{ color: '#ffc107', fontSize: 18 }}>
+            {'★'.repeat(existingFeedback.rating)}
+            {'☆'.repeat(5 - existingFeedback.rating)}
+          </span>
+        </div>
+        <div>
+          {existingFeedback.comment ? (
+            <span>{existingFeedback.comment}</span>
+          ) : (
+            <span style={{ color: '#888' }}>(No comment)</span>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit} style={{ marginTop: 12, marginBottom: 8, background: '#f7f7f7', padding: 12, borderRadius: 8 }}>
+      <div style={{ marginBottom: 8 }}>
+        <span style={{ marginRight: 8 }}>Rate your experience:</span>
+        {[1, 2, 3, 4, 5].map((num) => (
+          <span
+            key={num}
+            style={{
+              cursor: 'pointer',
+              color: rating >= num ? '#ffc107' : '#ccc',
+              fontSize: 22,
+              marginRight: 2,
+            }}
+            onClick={() => setRating(num)}
+            role="button"
+            aria-label={`Rate ${num}`}
+          >
+            ★
+          </span>
+        ))}
+      </div>
+      <div>
+        <textarea
+          placeholder="Optional comment"
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          style={{ width: '100%', minHeight: 40, borderRadius: 4, border: '1px solid #ccc', marginBottom: 8 }}
+        />
+      </div>
+      {error && <div style={{ color: 'red', marginBottom: 4 }}>{error}</div>}
+      {success && <div style={{ color: 'green', marginBottom: 4 }}>{success}</div>}
+      <button
+        type="submit"
+        style={{
+          background: '#1976d2',
+          color: '#fff',
+          border: 'none',
+          borderRadius: 4,
+          padding: '6px 18px',
+          cursor: 'pointer',
+        }}
+      >
+        Submit Feedback
+      </button>
+    </form>
+  );
+};
 
 const PatientHome = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [appointments, setAppointments] = useState([]);
+  const [feedbackMap, setFeedbackMap] = useState({});
   const [date, setDate] = useState('');
   const [specializations, setSpecializations] = useState([]);
   const [selectedSpecialization, setSelectedSpecialization] = useState('');
@@ -46,8 +180,10 @@ const PatientHome = () => {
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [passwordError, setError] = useState('');
   const [passwordSuccess, setSuccess] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('ALL');
+  const [selectedStatus, setSelectedStatus] = useState('PENDING');
   const [activeTab, setActiveTab] = useState('book');
+  // For completed section: which feedback tab is active
+  const [completedTab, setCompletedTab] = useState('feedbacked');
   let timeout;
 
   // Fetch logged-in user details
@@ -70,9 +206,33 @@ const PatientHome = () => {
         (a, b) => new Date(`${b.appointmentDate} ${b.slot}`) - new Date(`${a.appointmentDate} ${a.slot}`)
       );
       setAppointments(sorted);
+      fetchFeedbacks(sorted);
     } catch (err) {
       console.error('Failed to fetch appointments', err);
     }
+  };
+
+  // Fetch feedbacks for all completed appointments
+  const fetchFeedbacks = async (appointmentsList) => {
+    const completed = appointmentsList.filter(a => a.status === 'COMPLETED');
+    if (completed.length === 0) {
+      setFeedbackMap({});
+      return;
+    }
+    const feedbacks = {};
+    await Promise.all(
+      completed.map(async (appt) => {
+        try {
+          const res = await API.get(`/feedback/appointment/${appt.id}`);
+          if (res.data && typeof res.data === 'object' && res.data.id != null) {
+            feedbacks[appt.id] = res.data;
+          }
+        } catch {
+          // No feedback for this appointment
+        }
+      })
+    );
+    setFeedbackMap(feedbacks);
   };
 
   useEffect(() => {
@@ -239,16 +399,25 @@ const PatientHome = () => {
     }
     try {
       await API.post('/api/auth/change-password', { oldPassword, newPassword });
-      alert('Password changed successfully!');
-      setShowChangePassword(false);
-      navigate('/login');
+      await API.post('/api/auth/logout');
+      setSuccess('Password changed successfully! Redirecting to login...');
+      setTimeout(() => {
+        setShowChangePassword(false);
+        navigate('/login');
+      }, 1500);
     } catch (err) {
-      setError(err.response?.data || 'Failed to change password.');
+      setError(
+        (err.response && (
+          typeof err.response.data === 'string'
+            ? err.response.data
+            : err.response.data?.message
+        )) || 'Failed to change password.'
+      );
     }
   };
 
   const filteredAppointments = appointments.filter((appt) =>
-    selectedStatus === 'ALL' ? true : appt.status === selectedStatus
+    appt.status === selectedStatus
   );
 
   // Download report handler for completed appointments
@@ -256,6 +425,11 @@ const PatientHome = () => {
     if (!patientReportPath) return;
     window.open(`http://localhost:8080/files/download/${encodeURIComponent(patientReportPath)}`, '_blank');
   };
+
+  // Separate completed appointments into feedbacked and not feedbacked
+  const completedAppointments = appointments.filter(a => a.status === 'COMPLETED');
+  const feedbackedAppointments = completedAppointments.filter(a => feedbackMap[a.id]);
+  const notFeedbackedAppointments = completedAppointments.filter(a => !feedbackMap[a.id]);
 
   return (
     <div className="patient-dashboard">
@@ -271,13 +445,13 @@ const PatientHome = () => {
           <button onClick={() => setActiveTab('book')}>Book Appointment</button>
           <button onClick={handleOpenChangePassword}>Change Password</button>
           <button
-    className="whatsapp-button"
-    onClick={() => window.open('https://wa.me/919177524378?text=Hello%20Hospital%20Team', '_blank')}
-    style={{ backgroundColor: '#25D366', color: 'white' }}
-  >
-    <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" style={{ width: 20, marginRight: 8, verticalAlign: 'middle' }} />
-    Chat with Hospital
-  </button>
+            className="whatsapp-button"
+            onClick={() => window.open('https://wa.me/919177524378?text=Hello%20Hospital%20Team', '_blank')}
+            style={{ backgroundColor: '#25D366', color: 'white' }}
+          >
+            <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" style={{ width: 20, marginRight: 8, verticalAlign: 'middle' }} />
+            Chat with Hospital
+          </button>
           <button className="red-button" onClick={() => handleLogout(false)}>Logout</button>
         </div>
       </div>
@@ -379,7 +553,108 @@ const PatientHome = () => {
               ))}
             </div>
             {filteredAppointments.length === 0 ? (
-              <p>No appointments{selectedStatus !== 'ALL' ? ` with status "${selectedStatus}"` : ''}.</p>
+              <p style={{ color: '#888', margin: '24px 0', textAlign: 'center' }}>
+                No appointments with status "{STATUS_LABELS[selectedStatus]}".
+              </p>
+            ) : selectedStatus === 'COMPLETED' ? (
+              <div>
+                <div style={{ display: 'flex', gap: 24, marginBottom: 16 }}>
+                  <button
+                    className={completedTab === 'feedbacked' ? 'active' : ''}
+                    style={{
+                      padding: '8px 18px',
+                      borderRadius: 20,
+                      border: 'none',
+                      background: completedTab === 'feedbacked' ? '#42a5f5' : '#eee',
+                      color: completedTab === 'feedbacked' ? '#fff' : '#333',
+                      fontWeight: completedTab === 'feedbacked' ? 'bold' : 'normal',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => setCompletedTab('feedbacked')}
+                  >
+                    Feedback Submitted
+                  </button>
+                  <button
+                    className={completedTab === 'pending' ? 'active' : ''}
+                    style={{
+                      padding: '8px 18px',
+                      borderRadius: 20,
+                      border: 'none',
+                      background: completedTab === 'pending' ? '#42a5f5' : '#eee',
+                      color: completedTab === 'pending' ? '#fff' : '#333',
+                      fontWeight: completedTab === 'pending' ? 'bold' : 'normal',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => setCompletedTab('pending')}
+                  >
+                    Feedback Pending
+                  </button>
+                </div>
+                <div>
+                  {completedTab === 'feedbacked' ? (
+                    feedbackedAppointments.length === 0 ? (
+                      <p style={{ color: '#888', margin: '12px 0' }}>No completed appointments with feedback.</p>
+                    ) : (
+                      <ul className="appointment-list">
+                        {feedbackedAppointments.map((appt) => (
+                          <li key={appt.id} className="appointment-card">
+                            <p><strong>Date:</strong> {appt.appointmentDate}</p>
+                            <p><strong>Time:</strong> {appt.slot}</p>
+                            <p><strong>Doctor:</strong> {appt.doctorName}</p>
+                            <p><strong>Status:</strong> {appt.status}</p>
+                            {appt.patientReportPath && (
+                              <button
+                                style={{ marginRight: 8, backgroundColor: '#607d8b', color: 'white' }}
+                                onClick={() => handleDownloadReport(appt.patientReportPath)}
+                              >
+                                Download Lab Report
+                              </button>
+                            )}
+                            <button onClick={() => navigate(`/print/${appt.id}`)}> View & Print</button>
+                            <div style={{ marginTop: 8 }}>
+                              <strong>Feedback:</strong>
+                              <div style={{ color: '#ffc107', fontSize: 18 }}>
+                                {'★'.repeat(feedbackMap[appt.id]?.rating || 0)}
+                                {'☆'.repeat(5 - (feedbackMap[appt.id]?.rating || 0))}
+                              </div>
+                              <div>
+                                {feedbackMap[appt.id]?.comment
+                                  ? feedbackMap[appt.id].comment
+                                  : <span style={{ color: '#888' }}>(No comment)</span>}
+                              </div>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    )
+                  ) : (
+                    notFeedbackedAppointments.length === 0 ? (
+                      <p style={{ color: '#888', margin: '12px 0' }}>No completed appointments pending feedback.</p>
+                    ) : (
+                      <ul className="appointment-list">
+                        {notFeedbackedAppointments.map((appt) => (
+                          <li key={appt.id} className="appointment-card">
+                            <p><strong>Date:</strong> {appt.appointmentDate}</p>
+                            <p><strong>Time:</strong> {appt.slot}</p>
+                            <p><strong>Doctor:</strong> {appt.doctorName}</p>
+                            <p><strong>Status:</strong> {appt.status}</p>
+                            {appt.patientReportPath && (
+                              <button
+                                style={{ marginRight: 8, backgroundColor: '#607d8b', color: 'white' }}
+                                onClick={() => handleDownloadReport(appt.patientReportPath)}
+                              >
+                                Download Lab Report
+                              </button>
+                            )}
+                            <button onClick={() => navigate(`/print/${appt.id}`)}> View & Print</button>
+                            <FeedbackForm appointmentId={appt.id} onFeedbackSubmit={() => fetchAppointments(user.email)} />
+                          </li>
+                        ))}
+                      </ul>
+                    )
+                  )}
+                </div>
+              </div>
             ) : (
               <ul className="appointment-list">
                 {[...filteredAppointments]
@@ -403,6 +678,10 @@ const PatientHome = () => {
                         </button>
                       )}
                       <button onClick={() => navigate(`/print/${appt.id}`)}> View & Print</button>
+                      {/* Feedback form for completed appointments */}
+                      {appt.status === 'COMPLETED' && (
+                        <FeedbackForm appointmentId={appt.id} onFeedbackSubmit={() => fetchAppointments(user.email)} />
+                      )}
                     </li>
                   ))}
               </ul>

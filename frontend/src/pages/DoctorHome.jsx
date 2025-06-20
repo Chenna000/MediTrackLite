@@ -15,7 +15,7 @@ const DoctorHome = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [showChangePassword, setShowChangePassword] = useState(false);
-  
+
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -30,6 +30,10 @@ const DoctorHome = () => {
   const [labReportFile, setLabReportFile] = useState(null);
 
   const [showCenterAlert, setShowCenterAlert] = useState(false);
+
+  // Feedback state
+  const [doctorFeedback, setDoctorFeedback] = useState([]);
+  const [averageRating, setAverageRating] = useState(null);
 
   const API = axios.create({
     baseURL: 'http://localhost:8080',
@@ -52,6 +56,8 @@ const DoctorHome = () => {
         else {
           setUser(res.data);
           loadAppointments(res.data.email);
+          fetchDoctorFeedback(res.data.email);
+          fetchAverageRating(res.data.email);
         }
       } catch {
         navigate('/login');
@@ -77,6 +83,26 @@ const DoctorHome = () => {
       setAppointments(res.data);
     } catch (err) {
       console.error('Failed to fetch appointments', err);
+    }
+  };
+
+  // Fetch all feedback for this doctor
+  const fetchDoctorFeedback = async (email) => {
+    try {
+      const res = await API.get('/feedback/doctor', { params: { email } });
+      setDoctorFeedback(res.data);
+    } catch (err) {
+      setDoctorFeedback([]);
+    }
+  };
+
+  // Fetch average rating for this doctor
+  const fetchAverageRating = async (email) => {
+    try {
+      const res = await API.get('/feedback/doctor/average', { params: { email } });
+      setAverageRating(res.data);
+    } catch (err) {
+      setAverageRating(null);
     }
   };
 
@@ -118,7 +144,13 @@ const DoctorHome = () => {
       setShowChangePassword(false);
       navigate('/login');
     } catch (err) {
-      setError(err.response?.data || 'Failed to change password.');
+      setError(
+        (err.response && (
+          typeof err.response.data === 'string'
+            ? err.response.data
+            : err.response.data?.message
+        )) || 'Failed to change password.'
+      );
     }
   };
 
@@ -188,6 +220,16 @@ const DoctorHome = () => {
     setPrescriptionForm({ ...prescriptionForm, medicines: updated });
   };
 
+  // Only these statuses
+  const STATUS_LABELS = {
+    PENDING: 'Pending',
+    ACCEPTED: 'Accepted',
+    REJECTED: 'Rejected',
+    IN_PROGRESS: 'In Progress',
+    COMPLETED: 'Completed'
+  };
+  const STATUS_KEYS = Object.keys(STATUS_LABELS);
+
   const filteredAppointments = appointments.filter(app =>
     statusFilter === 'ALL' ? true : app.status === statusFilter
   );
@@ -197,6 +239,9 @@ const DoctorHome = () => {
     if (!labReportsPath) return;
     window.open(`http://localhost:8080/files/download/${encodeURIComponent(labReportsPath)}`, '_blank');
   };
+
+  // Filter completed appointments for feedback display
+  const completedAppointments = appointments.filter(app => app.status === 'COMPLETED');
 
   return (
     <div className="doctor-dashboard-container">
@@ -209,87 +254,159 @@ const DoctorHome = () => {
           <p>{user?.name}</p>
           <p>{user?.email}</p>
           <button onClick={() => setView('appointments')}>Appointments</button>
+          <button onClick={() => setView('feedback')}>Feedback</button>
           <button onClick={() => setView('password')}>Change Password</button>
           <button className="red-button" onClick={() => handleLogout(false)}>Logout</button>
         </div>
 
-        <div className="main-content">
+        <div className="main-content" style={view === 'feedback' ? { display: 'flex', flexDirection: 'row', gap: 24 } : {}}>
           {view === 'appointments' && (
             <>
               <div className="status-tabs">
-                {['PENDING', 'ACCEPTED', 'REJECTED', 'IN_PROGRESS', 'COMPLETED'].map(s => (
+                {STATUS_KEYS.map(s => (
                   <button
                     key={s}
                     className={statusFilter === s ? 'active' : ''}
                     onClick={() => setStatusFilter(s)}
                   >
-                    {s}
+                    {STATUS_LABELS[s]}
                   </button>
                 ))}
               </div>
               <div className="appointments-list">
-                {filteredAppointments.map(app => (
-                  <div className="appointment-card" key={app.id}>
-                    <p><strong>Patient:</strong> {app.patientEmail}</p>
-                    <p><strong>Date:</strong> {app.appointmentDate}</p>
-                    <p><strong>Time:</strong> {app.slot}</p>
-                    <p><strong>Issue:</strong> {app.problemDescription}</p>
-
-                    {app.status === 'PENDING' && app.patientReportPath && (
-                      <button
-                        style={{ marginBottom: 8, backgroundColor: '#607d8b', color: 'white' }}
-                        onClick={() => handleDownloadReport(app.patientReportPath)}
-                      >
-                        Download Report
-                      </button>
-                    )}
-
-                    {app.status === 'PENDING' && (
-                      <>
-                        <button onClick={() => handleStatus(app.id, 'ACCEPTED')}>✔ Accept</button>
-                        <button className="red-button" onClick={() => handleStatus(app.id, 'REJECTED')}>✘ Reject</button>
-                      </>
-                    )}
-                    {app.status === 'ACCEPTED' && (
-                      <button onClick={() => handleStatus(app.id, 'IN_PROGRESS')}>Start</button>
-                    )}
-                    {app.status === 'IN_PROGRESS' && (
-                      <button onClick={() => openPrescriptionForm(app.id)}>Upload Prescription</button>
-                    )}
-                    {app.status === 'COMPLETED' && (
-                      <>
-                        {app.labReportsPath && (
-                          <button
-                            style={{ marginRight: 8, backgroundColor: '#607d8b', color: 'white' }}
-                            onClick={() => handleDownloadReport(app.labReportsPath)}
-                          >
-                            Download Lab Report
-                          </button>
-                        )}
-                        <button onClick={() => navigate(`/print/${app.id}`)}>Print</button>
-                        {app.phoneNo && (
-  <button
-    className="whatsapp-button"
-    style={{ backgroundColor: '#25D366', color: 'white', margin: '8px 0' }}
-    onClick={() =>
-      window.open(
-        `https://wa.me/${app.phoneNo}?text=Hello%20this%20is%20Dr.%20${user?.name}%20regarding%20your%20appointment.`,
-        '_blank'
-      )
-    }
-  >
-    <img
-      src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg"
-      alt="WhatsApp"
-      style={{ width: 20, marginRight: 8, verticalAlign: 'middle' }}
-    />
-    WhatsApp Patient
-  </button>
-)}
-                      </>
-                    )}
+                {appointments.filter(app => statusFilter === 'ALL' ? true : app.status === statusFilter).length === 0 ? (
+                  <div style={{ color: '#888', margin: '24px 0', textAlign: 'center' }}>
+                    No appointments{statusFilter !== 'ALL' ? ` with status "${STATUS_LABELS[statusFilter]}"` : ''}.
                   </div>
-                ))}
+                ) : (
+                  filteredAppointments.map(app => (
+                    <div className="appointment-card" key={app.id}>
+                      <p><strong>Patient:</strong> {app.patientEmail.split("@")[0]}</p>
+                      <p><strong>Date:</strong> {app.appointmentDate}</p>
+                      <p><strong>Time:</strong> {app.slot}</p>
+                      <p><strong>Issue:</strong> {app.problemDescription}</p>
+                      {app.status === 'PENDING' && app.patientReportPath && (
+                        <button
+                          style={{ marginBottom: 8, backgroundColor: '#607d8b', color: 'white' }}
+                          onClick={() => handleDownloadReport(app.patientReportPath)}
+                        >
+                          Download Report
+                        </button>
+                      )}
+                      {app.status === 'PENDING' && (
+                        <>
+                          <button onClick={() => handleStatus(app.id, 'ACCEPTED')}>✔ Accept</button>
+                          <button className="red-button" onClick={() => handleStatus(app.id, 'REJECTED')}>✘ Reject</button>
+                        </>
+                      )}
+                      {app.status === 'ACCEPTED' && (
+                        <button onClick={() => handleStatus(app.id, 'IN_PROGRESS')}>Start</button>
+                      )}
+                      {app.status === 'IN_PROGRESS' && (
+                        <button onClick={() => openPrescriptionForm(app.id)}>Upload Prescription</button>
+                      )}
+                      {app.status === 'COMPLETED' && (
+                        <>
+                          {app.labReportsPath && (
+                            <button
+                              style={{ marginRight: 8, backgroundColor: '#607d8b', color: 'white' }}
+                              onClick={() => handleDownloadReport(app.labReportsPath)}
+                            >
+                              Download Lab Report
+                            </button>
+                          )}
+                          <button onClick={() => navigate(`/print/${app.id}`)}>Print</button>
+                          {app.phoneNo && (
+                            <button
+                              className="whatsapp-button"
+                              style={{ backgroundColor: '#25D366', color: 'white', margin: '8px 0' }}
+                              onClick={() =>
+                                window.open(
+                                  `https://wa.me/${app.phoneNo}?text=Hello%20this%20is%20Dr.%20${user?.name}%20regarding%20your%20appointment.`,
+                                  '_blank'
+                                )
+                              }
+                            >
+                              <img
+                                src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg"
+                                alt="WhatsApp"
+                                style={{ width: 20, marginRight: 8, verticalAlign: 'middle' }}
+                              />
+                              WhatsApp Patient
+                            </button>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </>
+          )}
+
+          {view === 'feedback' && (
+            <>
+              {/* Left half: completed appointments & feedback */}
+              <div style={{ flex: 1, marginRight: 24 }}>
+                <h4>Completed Appointments & Feedback</h4>
+                {completedAppointments.length > 0 ? (
+                  completedAppointments.map(app => {
+                    const feedback = doctorFeedback.find(fb => fb.appointment && fb.appointment.id === app.id);
+                    return (
+                      <div key={app.id} className="appointment-card" style={{ background: '#f7f7f7', marginBottom: 12 }}>
+                        <p><strong>Patient:</strong> {app.patientEmail.split("@")[0]}</p>
+                        <p><strong>Date:</strong> {app.appointmentDate}</p>
+                        <p><strong>Time:</strong> {app.slot}</p>
+                        <p><strong>Issue:</strong> {app.problemDescription}</p>
+                        {feedback ? (
+                          <div style={{ marginTop: 8 }}>
+                            <span style={{ color: '#ffc107', fontSize: 18 }}>
+                              {'★'.repeat(feedback.rating)}
+                              {'☆'.repeat(5 - feedback.rating)}
+                            </span>
+                            <span style={{ marginLeft: 8, color: '#333' }}>
+                              {feedback.comment}
+                            </span>
+                          </div>
+                        ) : (
+                          <div style={{ color: '#888', marginTop: 8 }}>No feedback for this appointment.</div>
+                        )}
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div>No completed appointments yet.</div>
+                )}
+              </div>
+              {/* Right half: all feedbacks and average */}
+              <div style={{ flex: 1, minWidth: 320 }}>
+                <h3>Feedback Received</h3>
+                {averageRating !== null && (
+                  <div style={{ marginBottom: 16, fontWeight: 'bold' }}>
+                    Average Rating: <span style={{ color: '#ffc107', fontSize: 22 }}>{averageRating.toFixed(2)} ★</span>
+                  </div>
+                )}
+                {doctorFeedback.length === 0 ? (
+                  <div>No feedback received yet.</div>
+                ) : (
+                  <div>
+                    <h4>All Feedback</h4>
+                    {doctorFeedback.map((fb, idx) => (
+                      <div key={fb.id || idx} style={{ borderBottom: '1px solid #eee', padding: 8, marginBottom: 8 }}>
+                        <span style={{ color: '#ffc107', fontSize: 18 }}>
+                          {'★'.repeat(fb.rating)}
+                          {'☆'.repeat(5 - fb.rating)}
+                        </span>
+                        <span style={{ marginLeft: 8, color: '#333' }}>{fb.comment}</span>
+                        {fb.appointment && (
+                          <span style={{ marginLeft: 16, color: '#888', fontSize: 13 }}>
+                            (Patient: {fb.appointment.patientEmail.split("@")[0]}, Date: {fb.appointment.appointmentDate})
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </>
           )}
@@ -314,7 +431,7 @@ const DoctorHome = () => {
             <h3>Upload Prescription</h3>
             {prescriptionError && <p className="error">{prescriptionError}</p>}
             {prescriptionSuccess && <p className="success">{prescriptionSuccess}</p>}
-            
+
             <form onSubmit={handlePrescriptionSubmit}>
               <div className="medicine-list">
                 {prescriptionForm.medicines.map((m, i) => (
