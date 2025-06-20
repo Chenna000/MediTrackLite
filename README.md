@@ -38,7 +38,7 @@ This project was built using **React (Vite)** for the frontend and **Spring Boot
 - Add phone number and problem description (max 200 chars)
 - View booked appointments in reverse chronological order
 - Print appointment confirmation
-- See prescription after appointment is completed
+- See prescription after appointment is completed and provide feedback
 - Optionally upload medical reports for easier consultation 
 
 ### 👨‍⚕️ Doctor Module
@@ -47,6 +47,7 @@ This project was built using **React (Vite)** for the frontend and **Spring Boot
 - Print accepted appointment details
 - Add prescriptions after appointment is in progress
 - Follow up patients via Whatsapp
+- Can see feedback provided by patients
 - Otionally upload lab reports during prescription upload
 
 ### 💊 Prescription Management
