@@ -1,7 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import interactionPlugin from '@fullcalendar/interaction';
 import './../css/DoctorHome.css';
+import '@fullcalendar/common/main.css';
 
 const ANALYTICS_API = axios.create({
   baseURL: 'http://localhost:8080/analytics',
@@ -15,6 +19,7 @@ const DoctorHome = () => {
   const [statusFilter, setStatusFilter] = useState('PENDING');
   const [toast, setToast] = useState('');
   const [view, setView] = useState('appointments');
+  const [calendarView, setCalendarView] = useState(false);
 
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -265,6 +270,96 @@ const DoctorHome = () => {
   // Filter completed appointments for feedback display
   const completedAppointments = appointments.filter(app => app.status === 'COMPLETED');
 
+  // Calendar View for Doctor
+  const DoctorCalendarView = ({ appointments, onStatusUpdate }) => {
+    // Filter out rejected appointments
+    const filtered = appointments.filter(
+      (appt) => appt.status !== 'REJECTED'
+    );
+
+    // Map to FullCalendar events
+    const events = filtered.map((appt) => {
+      let slot = appt.slot;
+      if (slot && slot.length === 4) slot = '0' + slot;
+      if (!slot || !/^\d{2}:\d{2}$/.test(slot)) slot = '09:00';
+
+      return {
+        id: appt.id,
+        title: `${appt.patientEmail.split('@')[0]}`,
+        start: `${appt.appointmentDate}T${slot}`,
+        color:
+          appt.status === 'COMPLETED'
+            ? '#43a047'
+            : appt.status === 'IN_PROGRESS'
+            ? '#fbc02d'
+            : appt.status === 'ACCEPTED'
+            ? '#1976d2'
+            : '#607d8b',
+        extendedProps: appt,
+      };
+    });
+
+    // Custom event content
+    function renderEventContent(eventInfo) {
+      const { slot, status, patientEmail } = eventInfo.event.extendedProps;
+      // Only allow status update for Pending and Accepted
+      const canUpdate =
+        status === 'PENDING' || status === 'ACCEPTED';
+
+      let nextStatus = '';
+      if (status === 'PENDING') nextStatus = 'ACCEPTED';
+      else if (status === 'ACCEPTED') nextStatus = 'IN_PROGRESS';
+
+      return (
+        <div className="fc-custom-event" style={{ minWidth: 120 }}>
+          <div className="fc-event-slot"> {slot}</div>
+          <div className="fc-event-title"> {patientEmail.split('@')[0]}</div>
+          <div className="fc-event-status">
+            {' '}
+            {canUpdate ? (
+              <span
+                style={{
+                  color: status === 'PENDING' ? '#fbc02d' : '#1976d2',
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                  fontWeight: 600,
+                }}
+                onClick={() => onStatusUpdate(eventInfo.event.id, nextStatus)}
+                title={`Click to update status to ${nextStatus.replace('_', ' ')}`}
+              >
+                {STATUS_LABELS[status]}
+              </span>
+            ) : (
+              <span style={{ color: status === 'COMPLETED' ? '#0d47a1' : '#607d8b' }}>
+                {STATUS_LABELS[status]}
+              </span>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="calendar-container">
+        <h3 style={{ marginBottom: 16, textAlign: 'center' }}>Appointments Calendar</h3>
+        <FullCalendar
+          plugins={[dayGridPlugin, interactionPlugin]}
+          initialView="dayGridMonth"
+          height="auto"
+          events={events}
+          eventContent={renderEventContent}
+          headerToolbar={{
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,dayGridWeek,dayGridDay',
+          }}
+          dayMaxEventRows={2}
+          eventDisplay="block"
+        />
+      </div>
+    );
+  };
+
   // Visualization for analytics (pie chart for medicines, bar for patient count, etc.)
   const renderAnalytics = () => {
     if (analyticsLoading) {
@@ -384,7 +479,7 @@ const DoctorHome = () => {
           </div>
           <div style={{ marginBottom: 12 }}>
             <strong>Rating Distribution:</strong>
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, marginTop: 100, height: 80 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, marginTop: 16, height: 150 }}>
               {ratingDist.map((count, idx) => (
                 <div key={idx} style={{ textAlign: 'center', flex: 1 }}>
                   <div style={{
@@ -416,15 +511,18 @@ const DoctorHome = () => {
           <img src="/images/docor_profile.jpg" alt="doctor" />
           <p>{user?.name}</p>
           <p>{user?.email}</p>
-          <button onClick={() => setView('appointments')}>Appointments</button>
-          <button onClick={() => setView('feedback')}>Feedback</button>
-          <button onClick={() => setView('analytics')}>Analytics</button>
-          <button onClick={() => setView('password')}>Change Password</button>
+          <button onClick={() => { setView('appointments'); setCalendarView(false); }}>Appointments</button>
+          <button onClick={() => { setView('feedback'); setCalendarView(false); }}>Feedback</button>
+          <button onClick={() => { setView('analytics'); setCalendarView(false); }}>Analytics</button>
+          <button onClick={() => { setView('password'); setCalendarView(false); }}>Change Password</button>
+          <button onClick={() => { setCalendarView(true); setView('calendar'); }}>Calendar View</button>
           <button className="red-button" onClick={() => handleLogout(false)}>Logout</button>
         </div>
 
         <div className="main-content" style={view === 'feedback' ? { display: 'flex', flexDirection: 'row', gap: 24 } : {}}>
-          {view === 'appointments' && (
+          {calendarView ? (
+            <DoctorCalendarView appointments={appointments} onStatusUpdate={handleStatus} />
+          ) : view === 'appointments' ? (
             <>
               <div className="status-tabs">
                 {STATUS_KEYS.map(s => (
@@ -506,9 +604,7 @@ const DoctorHome = () => {
                 )}
               </div>
             </>
-          )}
-
-          {view === 'feedback' && (
+          ) : view === 'feedback' ? (
             <>
               {/* Left half: completed appointments & feedback */}
               <div style={{ flex: 1, marginRight: 24 }}>
@@ -573,15 +669,11 @@ const DoctorHome = () => {
                 )}
               </div>
             </>
-          )}
-
-          {view === 'analytics' && (
+          ) : view === 'analytics' ? (
             <div style={{ width: '100%' }}>
               {renderAnalytics()}
             </div>
-          )}
-
-          {view === 'password' && (
+          ) : view === 'password' ? (
             <form onSubmit={handleChangePassword} className="change-password-form">
               <h3>Change Password</h3>
               {error && <p className="error">{error}</p>}
@@ -591,7 +683,7 @@ const DoctorHome = () => {
               <input type="password" placeholder="Confirm Password" value={confirmNewPassword} onChange={e => setConfirmNewPassword(e.target.value)} />
               <button type="submit">Update</button>
             </form>
-          )}
+          ) : null}
         </div>
       </div>
 
