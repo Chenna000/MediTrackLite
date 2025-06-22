@@ -4,13 +4,11 @@ import { useNavigate } from 'react-router-dom';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import timeGridPlugin from '@fullcalendar/timegrid';
 import './../css/DoctorHome.css';
 import '@fullcalendar/common/main.css';
 
-const ANALYTICS_API = axios.create({
-  baseURL: 'http://localhost:8080/analytics',
-  withCredentials: true,
-});
+
 
 const DoctorHome = () => {
   const navigate = useNavigate();
@@ -54,6 +52,10 @@ const DoctorHome = () => {
     withCredentials: true,
   });
 
+  const ANALYTICS_API = axios.create({
+    baseURL: 'http://localhost:8080/analytics',
+    withCredentials: true,
+  });
   const timeoutRef = useRef(null);
   const resetInactivityTimer = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -271,94 +273,116 @@ const DoctorHome = () => {
   const completedAppointments = appointments.filter(app => app.status === 'COMPLETED');
 
   // Calendar View for Doctor
-  const DoctorCalendarView = ({ appointments, onStatusUpdate }) => {
-    // Filter out rejected appointments
-    const filtered = appointments.filter(
-      (appt) => appt.status !== 'REJECTED'
-    );
+  
+const DoctorCalendarView = ({ appointments, onStatusUpdate }) => {
+  const [selectedEvent, setSelectedEvent] = useState(null);
 
-    // Map to FullCalendar events
-    const events = filtered.map((appt) => {
-      let slot = appt.slot;
-      if (slot && slot.length === 4) slot = '0' + slot;
-      if (!slot || !/^\d{2}:\d{2}$/.test(slot)) slot = '09:00';
+  const filtered = appointments.filter(appt => appt.status !== 'REJECTED');
 
-      return {
-        id: appt.id,
-        title: `${appt.patientEmail.split('@')[0]}`,
-        start: `${appt.appointmentDate}T${slot}`,
-        color:
-          appt.status === 'COMPLETED'
-            ? '#43a047'
-            : appt.status === 'IN_PROGRESS'
-            ? '#fbc02d'
-            : appt.status === 'ACCEPTED'
-            ? '#1976d2'
-            : '#607d8b',
-        extendedProps: appt,
-      };
-    });
+  const events = filtered.map(appt => {
+    let slot = appt.slot;
+    if (slot && slot.length === 4) slot = '0' + slot;
+    if (!slot || !/^\d{2}:\d{2}$/.test(slot)) slot = '09:00';
 
-    // Custom event content
-    function renderEventContent(eventInfo) {
-      const { slot, status, patientEmail } = eventInfo.event.extendedProps;
-      // Only allow status update for Pending and Accepted
-      const canUpdate =
-        status === 'PENDING' || status === 'ACCEPTED';
+    // Format slot to readable time (e.g. 02:30 PM)
+    const [hour, minute] = slot.split(':');
+    const timeObj = new Date();
+    timeObj.setHours(parseInt(hour));
+    timeObj.setMinutes(parseInt(minute));
+   
+    return {
+      title: `${appt.patientEmail.split('@')[0]} - ${appt.slot}`,
+      start: `${appt.appointmentDate}T${slot}`,
+      color:
+        appt.status === 'COMPLETED'
+          ? '#4caf50'
+          : appt.status === 'IN_PROGRESS'
+          ? '#9c27b0'
+          : appt.status === 'ACCEPTED'
+          ? '#2196f3'
+          : appt.status === 'PENDING'
+          ? '#ff9800'
+          : '#607d8b',
+      extendedProps: appt
+    };
+  });
 
-      let nextStatus = '';
-      if (status === 'PENDING') nextStatus = 'ACCEPTED';
-      else if (status === 'ACCEPTED') nextStatus = 'IN_PROGRESS';
+  return (
+    <div className="calendar-wrapper">
+      <h2 className="calendar-title">📅 Doctor's Appointment Calendar</h2>
 
-      return (
-        <div className="fc-custom-event" style={{ minWidth: 120 }}>
-          <div className="fc-event-slot"> {slot}</div>
-          <div className="fc-event-title"> {patientEmail.split('@')[0]}</div>
-          <div className="fc-event-status">
-            {' '}
-            {canUpdate ? (
-              <span
-                style={{
-                  color: status === 'PENDING' ? '#fbc02d' : '#1976d2',
-                  cursor: 'pointer',
-                  textDecoration: 'underline',
-                  fontWeight: 600,
-                }}
-                onClick={() => onStatusUpdate(eventInfo.event.id, nextStatus)}
-                title={`Click to update status to ${nextStatus.replace('_', ' ')}`}
-              >
-                {STATUS_LABELS[status]}
-              </span>
-            ) : (
-              <span style={{ color: status === 'COMPLETED' ? '#0d47a1' : '#607d8b' }}>
-                {STATUS_LABELS[status]}
-              </span>
-            )}
-          </div>
-        </div>
-      );
-    }
+      <div className="calendar-legend">
+        <span className="legend-item" style={{ backgroundColor: '#4caf50' }}>✔ Completed</span>
+        <span className="legend-item" style={{ backgroundColor: '#ff9800' }}>🕒 Pending</span>
+        <span className="legend-item" style={{ backgroundColor: '#2196f3' }}>✔ Accepted</span>
+        <span className="legend-item" style={{ backgroundColor: '#9c27b0' }}>⏳ In Progress</span>
+      </div>
 
+      <FullCalendar
+  plugins={[dayGridPlugin, interactionPlugin]}
+  initialView="dayGridMonth"
+  height="auto"
+  events={events}
+  eventClick={(info) => setSelectedEvent(info.event.extendedProps)}
+  eventDisplay="block"
+  dayMaxEventRows={3}
+  headerToolbar={{
+    left: 'prev,next today',
+    center: 'title',
+    right: 'dayGridMonth,dayGridWeek,dayGridDay', // ✅ only dayGrid views
+  }}
+  eventContent={(arg) => {
+    const { title } = arg.event;
     return (
-      <div className="calendar-container">
-        <h3 style={{ marginBottom: 16, textAlign: 'center' }}>Appointments Calendar</h3>
-        <FullCalendar
-          plugins={[dayGridPlugin, interactionPlugin]}
-          initialView="dayGridMonth"
-          height="auto"
-          events={events}
-          eventContent={renderEventContent}
-          headerToolbar={{
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,dayGridWeek,dayGridDay',
-          }}
-          dayMaxEventRows={2}
-          eventDisplay="block"
-        />
+      <div style={{ fontSize: '13px', padding: '2px 4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        {title}
       </div>
     );
-  };
+  }}
+/>
+
+
+
+      {/* Modal for full details */}
+      {selectedEvent && (
+        <div className="modal-overlay" onClick={() => setSelectedEvent(null)}>
+          <div className="modal-container animate-fadeInUp" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close-btn" onClick={() => setSelectedEvent(null)}>&times;</button>
+            <h3 className="modal-title">📝 Appointment Details</h3>
+            <div className="modal-content">
+              <p><strong>Date:</strong> {selectedEvent.appointmentDate}</p>
+              <p><strong>Time Slot:</strong> {selectedEvent.slot}</p>
+              <p><strong>Patient:</strong> {selectedEvent.patientEmail}</p>
+              <p><strong>Status:</strong> <span className={`status-badge ${selectedEvent.status.toLowerCase()}`}>{STATUS_LABELS[selectedEvent.status]}</span></p>
+              {selectedEvent.problemDescription && <p><strong>Problem:</strong> {selectedEvent.problemDescription}</p>}
+              {selectedEvent.patientReportPath && (
+                <button
+                  className="report-download-btn"
+                  onClick={() =>
+                    window.open(`http://localhost:8080/files/download/${encodeURIComponent(selectedEvent.patientReportPath)}`, '_blank')
+                  }
+                >
+                  📥 Download Lab Report
+                </button>
+              )}
+              {selectedEvent.status === 'COMPLETED' && selectedEvent.prescriptionPath && (
+                <button
+                  className="report-download-btn"
+                  style={{ backgroundColor: '#3f51b5', marginLeft: '10px' }}
+                  onClick={() =>
+                    window.open(`http://localhost:8080/files/download/${encodeURIComponent(selectedEvent.prescriptionPath)}`, '_blank')
+                  }
+                >
+                  💊 Download Prescription
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
   // Visualization for analytics (pie chart for medicines, bar for patient count, etc.)
   const renderAnalytics = () => {

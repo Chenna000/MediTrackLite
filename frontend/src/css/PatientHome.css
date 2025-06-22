@@ -1,4 +1,6 @@
 /* Global Reset */
+
+
 * {
   margin: 0;
   padding: 0;
@@ -600,4 +602,142 @@ body {
   font-size: 11px;
   color: #555;
   white-space: pre-line;
+}
+/* CalendarView.css */
+
+.calendar-wrapper {
+  max-width: 1000px;
+  margin: 40px auto;
+  padding: 20px;
+  background-color: #f9fafe;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+}
+
+.calendar-title {
+  text-align: center;
+  color: #2c3e50;
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+.calendar-legend {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.legend-item {
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+}
+/* Modal Styling */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(17, 17, 17, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.modal-container {
+  background-color: #ffffff;
+  padding: 25px 30px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 480px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  position: relative;
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  font-size: 24px;
+  background: transparent;
+  border: none;
+  color: #333;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.modal-title {
+  font-size: 22px;
+  margin-bottom: 15px;
+  color: #2c3e50;
+  text-align: center;
+}
+
+.modal-content p {
+  font-size: 16px;
+  margin: 8px 0;
+  color: #333;
+}
+
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.status-badge.completed {
+  background-color: #4caf50;
+}
+.status-badge.pending {
+  background-color: #ff9800;
+}
+.status-badge.accepted {
+  background-color: #2196f3;
+}
+.status-badge.rejected {
+  background-color: #f44336;
+}
+.status-badge.in_progress {
+  background-color: #9c27b0;
+}
+
+.report-download-btn {
+  background-color: #00796b;
+  color: white;
+  font-size: 15px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  margin-top: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.report-download-btn:hover {
+  background-color: #004d40;
+}
+
+/* Animations */
+.animate-fadeInUp {
+  animation: fadeInUp 0.35s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0px);
+    opacity: 1;
+  }
 }

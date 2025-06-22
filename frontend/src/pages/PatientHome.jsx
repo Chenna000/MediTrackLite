@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import timeGridPlugin from '@fullcalendar/timegrid'
 import './../css/PatientHome.css';
 import '@fullcalendar/common/main.css'; // Only FullCalendar CSS needed for v6+
 
@@ -287,66 +288,82 @@ const Timeline = ({ email }) => {
   );
 };
 
-// Calendar View for Appointments
-const CalendarView = ({ appointments }) => {
-  // Convert appointments to FullCalendar event format
-  const events = appointments.map(appt => {
-    // Ensure slot is in HH:mm format
-    let slot = appt.slot;
-    if (slot && slot.length === 4) slot = '0' + slot; // e.g. 9:00 -> 09:00
-    if (!slot || !/^\d{2}:\d{2}$/.test(slot)) slot = '09:00'; // fallback
 
-    return {
-      id: appt.id,
-      title: `${appt.doctorName} (${appt.status})`,
-      start: `${appt.appointmentDate}T${slot}`,
-      end: `${appt.appointmentDate}T${slot}`,
-      color:
-        appt.status === 'COMPLETED'
-          ? '#43a047'
-          : appt.status === 'IN_PROGRESS'
-          ? '#fbc02d'
-          : appt.status === 'ACCEPTED'
-          ? '#1976d2'
-          : appt.status === 'REJECTED'
-          ? '#e53935'
-          : '#607d8b',
-      extendedProps: appt,
-    };
-  });
+//calender view
+const CalendarView = ({ appointments }) => {
+  const [selectedEvent, setSelectedEvent] = useState(null);
+
+  const events = appointments.map((appt) => ({
+    title: `${appt.doctorName}\n${appt.slot}`,
+    date: appt.appointmentDate,
+    extendedProps: {
+      ...appt,
+    },
+    color:
+      appt.status === 'COMPLETED' ? '#4caf50' :
+      appt.status === 'PENDING' ? '#ff9800' :
+      appt.status === 'ACCEPTED' ? '#2196f3' :
+      appt.status === 'REJECTED' ? '#f44336' :
+      appt.status === 'IN_PROGRESS' ? '#9c27b0' :
+      '#607d8b',
+  }));
 
   return (
-    <div className="calendar-container">
-      <h3 style={{ marginBottom: 16, textAlign: 'center' }}>My Appointments Calendar</h3>
+    <div className="calendar-wrapper">
+      <h2 className="calendar-title">📅 My Appointment Calendar</h2>
+
+      <div className="calendar-legend">
+        <span className="legend-item" style={{ backgroundColor: '#4caf50' }}>✔ Completed</span>
+        <span className="legend-item" style={{ backgroundColor: '#ff9800' }}>🕒 Pending</span>
+        <span className="legend-item" style={{ backgroundColor: '#2196f3' }}>✔ Accepted</span>
+        <span className="legend-item" style={{ backgroundColor: '#f44336' }}>❌ Rejected</span>
+        <span className="legend-item" style={{ backgroundColor: '#9c27b0' }}>⏳ In Progress</span>
+      </div>
+
       <FullCalendar
-        plugins={[dayGridPlugin, interactionPlugin]}
-        initialView="dayGridMonth"
-        height={650}
-        events={events}
-        eventContent={renderEventContent}
-        headerToolbar={{
-          left: 'prev,next today',
-          center: 'title',
-          right: 'dayGridMonth,dayGridWeek,dayGridDay',
-        }}
-        dayMaxEventRows={2}
-        eventDisplay="block"
-      />
+  plugins={[dayGridPlugin, interactionPlugin]}
+  initialView="dayGridMonth"
+  height="auto"
+  events={events}
+  eventClick={(info) => setSelectedEvent(info.event.extendedProps)}
+  eventDisplay="block"
+  dayMaxEventRows={3}
+  headerToolbar={{
+    left: 'prev,next today',
+    center: 'title',
+    right: 'dayGridMonth,dayGridWeek,dayGridDay', // ✅ only dayGrid views
+  }}
+  eventContent={(arg) => {
+    const { title } = arg.event;
+    return (
+      <div style={{ fontSize: '13px', padding: '2px 4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        {title}
+      </div>
+    );
+  }}
+/>
+
+
+
+      {selectedEvent && (
+        <div className="modal-overlay" onClick={() => setSelectedEvent(null)}>
+          <div className="modal-container animate-fadeInUp" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close-btn" onClick={() => setSelectedEvent(null)}>&times;</button>
+            <h3 className="modal-title">📝 Appointment Details</h3>
+            <div className="modal-content">
+              <p><strong>Date:</strong> {selectedEvent.appointmentDate}</p>
+              <p><strong>Time Slot:</strong> {selectedEvent.slot}</p>
+              <p><strong>Doctor:</strong> {selectedEvent.doctorName}</p>
+              <p><strong>Status:</strong> <span className={`status-badge ${selectedEvent.status.toLowerCase()}`}>{selectedEvent.status}</span></p>
+              {selectedEvent.problemDescription && <p><strong>Problem:</strong> {selectedEvent.problemDescription}</p>}
+              
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
-
-function renderEventContent(eventInfo) {
-  const { doctorName, status, slot, problemDescription } = eventInfo.event.extendedProps;
-  return (
-    <div className="fc-custom-event">
-      <div className="fc-event-title">{doctorName}</div>
-      <div className="fc-event-status">{status}</div>
-      <div className="fc-event-slot">{slot}</div>
-      {/* <div className="fc-event-desc">{problemDescription}</div> */}
-    </div>
-  );
-}
 
 const PatientHome = () => {
   const navigate = useNavigate();
