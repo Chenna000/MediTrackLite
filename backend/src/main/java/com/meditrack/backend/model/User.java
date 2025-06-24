@@ -14,8 +14,22 @@ public class User {
 		this.role = role;
 		this.specialization = specialization;
 	}
+	 
+	 
 
-	 	@Id
+	 	public User( String name, String email, String password, String role, String specialization,
+			String status) {
+		this.name = name;
+		this.email = email;
+		this.password = password;
+		this.role = role;
+		this.specialization = specialization;
+		this.status = status;
+	}
+
+
+
+		@Id
 	    @GeneratedValue(strategy = GenerationType.IDENTITY)
 	    private Long id;
 
@@ -26,11 +40,22 @@ public class User {
 
 	    private String password;
 
-	    private String role; // "PATIENT" or "DOCTOR"
+	    private String role; // "PATIENT" or "DOCTOR" or "ADMIN"
 	    
 	    private String specialization;
 	    
-	    public String getSpecialization() {
+	    @Column(name = "status")
+	    private String status;
+	    
+	    
+	    
+	    public String getStatus() {
+			return status;
+		}
+		public void setStatus(String status) {
+			this.status = status;
+		}
+		public String getSpecialization() {
 			return specialization;
 		}
 		public void setSpecialization(String specialization) {

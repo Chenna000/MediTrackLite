@@ -17,9 +17,18 @@ public interface UserRepository extends JpaRepository<User, Long> {
 	 @Query("SELECT u.email FROM User u WHERE u.role = 'DOCTOR'")
 	    List<String> findEmailsByRole(@Param("role") String role);
 	 
-	 @Query("SELECT DISTINCT u.specialization FROM User u WHERE u.role <> 'PATIENT' AND u.specialization IS NOT NULL")
+	 @Query("SELECT DISTINCT u.specialization FROM User u WHERE u.role <> 'PATIENT' AND u.specialization IS NOT NULL AND u.role <> 'ADMIN'")
 	    List<String> findDistinctSpecializationsExcludingPatients();
 
 	    List<User> findByRoleAndSpecialization(String role, String specialization);
-	
+
+	    List<User> findByStatus(String status);
+	    @Query("SELECT COUNT(u) FROM User u WHERE u.role = :role")
+	    long countByRole(@Param("role") String role);
+	    
+	    void deleteByEmail(String email);
+	    
+	    List<User> findByStatusAndRoleNot(String status, String role);
+
+
 }

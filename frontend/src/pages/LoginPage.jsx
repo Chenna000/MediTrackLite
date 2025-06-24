@@ -57,6 +57,7 @@ const LoginPage = () => {
       const { role } = res.data;
       if (role === 'DOCTOR') navigate('/doctor');
       else if (role === 'PATIENT') navigate('/patient');
+      else if (role === 'ADMIN') navigate('/admin');
       else setError('Unknown role');
     } catch (err) {
       const msg = err.response?.data;
@@ -66,7 +67,7 @@ const LoginPage = () => {
         setLockoutEndTime(lockoutUntil);
         localStorage.setItem('lockoutEndTime', lockoutUntil.toISOString());
       } else {
-        setError('Invalid credentials');
+        setError( msg || 'Invalid credentials');
       }
     }
   };

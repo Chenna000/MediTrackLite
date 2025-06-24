@@ -18,4 +18,6 @@ public interface PrescriptionRepository extends JpaRepository<Prescription, Long
 	
     List<Prescription> findByAppointment_DoctorEmail(String doctorEmail);
 
+    void deleteByAppointmentIdIn(List<Long> appointmentIds);
+
 }

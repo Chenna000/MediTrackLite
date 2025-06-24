@@ -38,5 +38,22 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     
     @Query("SELECT a FROM Appointment a WHERE a.status = 'ACCEPTED' AND a.appointmentDate <= :today")
     List<Appointment> findAcceptedAppointments(@Param("today") LocalDate today);
+    
+    @Query("SELECT a.status, COUNT(a) FROM Appointment a GROUP BY a.status")
+    List<Object[]> countAppointmentsByStatus();
+
+    @Query("SELECT DATE(a.appointmentDate), COUNT(a) FROM Appointment a GROUP BY DATE(a.appointmentDate)")
+    List<Object[]> countAppointmentsPerDay();
+    
+    @Query("SELECT a.patientEmail, COUNT(a) FROM Appointment a GROUP BY a.patientEmail")
+    List<Object[]> countAppointmentsByPatient();
+    
+    @Query("SELECT a.doctorEmail, a.status, COUNT(a) FROM Appointment a GROUP BY a.doctorEmail, a.status")
+    List<Object[]> countAppointmentsByDoctorStatus();
+    
+    List<Appointment> findByDoctorEmailOrPatientEmail(String doctorEmail, String patientEmail);
+    
+    void deleteByDoctorEmailOrPatientEmail(String doctorEmail, String patientEmail);
+    
 
 }

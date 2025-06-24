@@ -50,7 +50,7 @@ public class AuthService {
         }
 
         String hashedPassword = passwordEncoder.encode(request.getPassword());
-        User user = new User(request.getName(), request.getEmail(), hashedPassword, request.getRole(), request.getSpecialization());
+        User user = new User(request.getName(), request.getEmail(), hashedPassword, request.getRole(), request.getSpecialization(), "PENDING");
         userRepo.save(user);
         return ResponseEntity.ok("Registration Successful");
     }
@@ -63,6 +63,13 @@ public class AuthService {
         }
 
         Optional<User> useOpt = userRepo.findByEmail(email);
+        
+        if(useOpt.get().getStatus().equals("PENDING")) {
+        	return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Wait for admin approval");
+        }
+        if(useOpt.get().getStatus().equals("INACTIVE")) {
+        	return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Account Deactivated Please contact Admin");
+        }
         if (useOpt.isEmpty() || !passwordEncoder.matches(request.getPassword(), useOpt.get().getPassword())) {
             loginAttempts.put(email, loginAttempts.getOrDefault(email, 0) + 1);
             if (loginAttempts.get(email) >= 5) {

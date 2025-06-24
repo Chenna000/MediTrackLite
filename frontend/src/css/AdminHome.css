@@ -1,0 +1,250 @@
+.admin-home-root {
+  display: flex;
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
+.admin-sidebar {
+  width: 270px;
+  background: #fff;
+  border-radius: 0 18px 18px 0;
+  box-shadow: 0 2px 16px rgba(25, 118, 210, 0.08);
+  padding: 32px 18px 24px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.admin-avatar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+.admin-name {
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: #1976d2;
+  margin-top: 8px;
+}
+
+.admin-email {
+  font-size: 0.97rem;
+  color: #555;
+  margin-bottom: 8px;
+  word-break: break-all;
+}
+
+.admin-nav {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.admin-nav button {
+  width: 100%;
+  padding: 10px 0;
+  border: none;
+  border-radius: 8px;
+  background: #e3f2fd;
+  color: #1976d2;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.admin-nav button.active,
+.admin-nav button:hover {
+  background: #1976d2;
+  color: #fff;
+}
+
+.admin-logout-btn {
+  width: 100%;
+  margin-top: auto;
+  padding: 10px 0;
+  border: none;
+  border-radius: 8px;
+  background: #e53935;
+  color: #fff;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.08);
+}
+
+.admin-main-content {
+  flex: 1;
+  padding: 36px 36px 36px 36px;
+  min-width: 0;
+}
+
+.dashboard-title {
+  color: #1976d2;
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 24px;
+}
+
+.toast {
+  background: #43a047;
+  color: #fff;
+  padding: 12px 32px;
+  border-radius: 8px;
+  text-align: center;
+  margin: 12px auto 0 auto;
+  max-width: 400px;
+  font-weight: 600;
+  box-shadow: 0 2px 12px rgba(25, 118, 210, 0.08);
+}
+
+.admin-stats-row {
+  display: flex;
+  gap: 24px;
+  justify-content: flex-start;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+}
+
+.admin-stats-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(25, 118, 210, 0.08);
+  padding: 24px 32px;
+  min-width: 260px;
+  flex: 1;
+  max-width: 340px;
+}
+
+.admin-status-list {
+  margin-top: 10px;
+}
+
+.admin-status-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 15px;
+}
+
+.admin-status-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 10px;
+}
+
+.admin-bar-chart {
+  margin-top: 18px;
+}
+
+.admin-section-row {
+  display: flex;
+  gap: 32px;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+.admin-section {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(25, 118, 210, 0.08);
+  padding: 24px 32px;
+  min-width: 340px;
+  flex: 1;
+  max-width: 700px;
+  margin-bottom: 32px;
+}
+
+.admin-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.admin-tabs button {
+  padding: 8px 18px;
+  border: none;
+  border-radius: 8px;
+  background: #e3f2fd;
+  color: #1976d2;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.admin-tabs button.active,
+.admin-tabs button:hover {
+  background: #1976d2;
+  color: #fff;
+}
+
+.admin-table-container {
+  overflow-x: auto;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 10px 8px;
+  border-bottom: 1px solid #e3e3e3;
+  font-size: 15px;
+}
+
+.admin-table th {
+  background: #f4faff;
+  color: #1976d2;
+  font-weight: 700;
+}
+
+.admin-action-btn {
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-weight: 600;
+  padding: 6px 16px;
+  margin-right: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-size: 14px;
+}
+
+@media (max-width: 1100px) {
+  .admin-home-root {
+    flex-direction: column;
+  }
+  .admin-sidebar {
+    width: 100%;
+    border-radius: 0 0 18px 18px;
+    min-height: unset;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: flex-start;
+    padding: 18px 8px 8px 8px;
+  }
+  .admin-main-content {
+    padding: 18px 8px 8px 8px;
+  }
+  .admin-section-row,
+  .admin-stats-row {
+    flex-direction: column;
+    gap: 18px;
+  }
+  .admin-section,
+  .admin-stats-card {
+    max-width: 100%;
+    min-width: 0;
+  }
+}

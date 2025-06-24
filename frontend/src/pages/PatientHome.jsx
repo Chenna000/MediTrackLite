@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import timeGridPlugin from '@fullcalendar/timegrid'
+//import timeGridPlugin from '@fullcalendar/timegrid'
 import './../css/PatientHome.css';
 import '@fullcalendar/common/main.css'; // Only FullCalendar CSS needed for v6+
 
