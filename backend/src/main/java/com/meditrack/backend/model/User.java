@@ -1,7 +1,7 @@
 package com.meditrack.backend.model;
 
 import jakarta.persistence.*;
-import lombok.*;
+
 
 @Entity
 @Table(name="users")

@@ -128,7 +128,6 @@ public class AppointmentService {
             }
         }
 
-        // Save to DB
         Appointment app = new Appointment();
         app.setPatientEmail(patientEmail);
         app.setDoctorEmail(doctorEmail);

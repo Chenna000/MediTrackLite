@@ -4,9 +4,7 @@ import com.meditrack.backend.model.ChangePasswordRequest;
 import com.meditrack.backend.model.LoginRequest;
 import com.meditrack.backend.model.Profile;
 import com.meditrack.backend.model.RegisterRequest;
-import com.meditrack.backend.model.User;
 import com.meditrack.backend.service.AuthService;
-
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +31,7 @@ public class AuthController {
         return authService.login(request, session);
     }
     
-    @PreAuthorize("hasAnyRole('DOCTOR','PATIENT')")
+    @PreAuthorize("hasAnyRole('DOCTOR','PATIENT', 'ADMIN')")
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentUser(HttpSession session) {
         return authService.getCurrentUser(session);
@@ -44,13 +42,13 @@ public class AuthController {
         return authService.logout(session);
     }
     
-    @PreAuthorize("hasAnyRole('DOCTOR','PATIENT')")
+    @PreAuthorize("hasAnyRole('DOCTOR','PATIENT','ADMIN')")
     @PostMapping("/change-password")
     public ResponseEntity<String> changePassword(@RequestBody ChangePasswordRequest request,HttpServletRequest req) {
         return authService.changePassword(request,req);
     }
     
-    
+    @PreAuthorize("hasAnyRole('DOCTOR','PATIENT','ADMIN')")
     @GetMapping("/profile")
     public ResponseEntity<?> getProfile( HttpServletRequest request){
     	try {

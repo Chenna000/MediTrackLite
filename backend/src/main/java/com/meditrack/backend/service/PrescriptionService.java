@@ -44,7 +44,6 @@ public class PrescriptionService {
 	        return "Prescriptions saved and appointment marked as COMPLETED.";
 	    }
 
-	    // get All Prescription Details 
 	    public List<PrescriptionDto> getPrescriptionByAppointmentId(Long appointmentId) {
 	    	System.out.println(prescriptionRepo.findByAppointmentId(appointmentId).getFirst());
 	    	List<Prescription> prescriptions = prescriptionRepo.findByAppointmentId(appointmentId);

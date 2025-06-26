@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -40,11 +39,6 @@ public class AppointmentController {
     public List<String> getAvailableSlots(@RequestParam String doctorEmail, @RequestParam String date) {
         return appointmentService.getAvailableSlots(doctorEmail, LocalDate.parse(date));
     }
-
-//    @PostMapping
-//    public ResponseEntity<String> bookAppointment(@RequestBody AppointmentRequest request) {
-//        return appointmentService.bookAppointment(request);
-//    }
     
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> bookAppointment(

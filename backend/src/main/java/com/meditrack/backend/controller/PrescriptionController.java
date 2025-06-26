@@ -9,13 +9,10 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-
-import com.meditrack.backend.model.Prescription;
 import com.meditrack.backend.model.PrescriptionDto;
 import com.meditrack.backend.model.PrescriptionRequest;
 import com.meditrack.backend.service.FileStorageService;
@@ -31,11 +28,6 @@ public class PrescriptionController {
 	 
 	 @Autowired
 	 private FileStorageService fileStorageService;
-
-//	    @PostMapping("/upload")
-//	    public ResponseEntity<String> addPrescription(@RequestBody PrescriptionRequest request) {
-//	        return ResponseEntity.ok(prescriptionService.addPrescription(request));
-//	    }
 
 	    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	    public ResponseEntity<String> addPrescription(

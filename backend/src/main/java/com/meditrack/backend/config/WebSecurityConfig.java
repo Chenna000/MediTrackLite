@@ -27,7 +27,7 @@ public class WebSecurityConfig {
 	                .anyRequest().authenticated()
 	        )
 	        .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
-	        .addFilterBefore(new SessionAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class); //  Register the filter
+	        .addFilterBefore(new SessionAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class); 
 
 	    return http.build();
 	}
