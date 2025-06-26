@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import AppointmentPayment from './AppointmentPayment';
+
 //import timeGridPlugin from '@fullcalendar/timegrid'
 import './../css/PatientHome.css';
 import '@fullcalendar/common/main.css'; // Only FullCalendar CSS needed for v6+
@@ -397,6 +399,8 @@ const PatientHome = () => {
   const [showTimeline, setShowTimeline] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
 
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+
   let timeout;
 
   const fetchUser = async () => {
@@ -524,36 +528,59 @@ const PatientHome = () => {
     setBookForm((prev) => ({ ...prev, slot: '' }));
   }, [date, bookForm.doctorEmail]);
 
-  const handleBook = async (e) => {
-    e.preventDefault();
-    setBookMsg('');
+
+  const handleValidate = async () => {
     const { doctorEmail, doctorName, slot, phoneNo, problemDescription } = bookForm;
-
-    if (!date || !selectedSpecialization || !doctorEmail || !slot || !problemDescription.trim()) {
-      setBookMsg('All fields are required.');
-      return;
+  
+    const appointmentRequest = {
+      doctorEmail,
+      doctorName,
+      slot,
+      phoneNo,
+      problemDescription,
+      appointmentDate: date,
+      specialization: selectedSpecialization,
+      patientEmail: user.email,
+    };
+  
+    try {
+      const res = await API.post('/appointments/validate', appointmentRequest);
+      console.log("✅ Validation Passed:", res.data);
+      return true;
+    } catch (err) {
+      console.error("❌ Validation Failed:", err.response?.data);
+      setBookMsg(err.response?.data || 'Validation failed');
+      return false;
     }
+  };
+  
+  
 
+  const handleFinalBooking = async () => {
+    setBookMsg('');
+  
+    // ❌ Don't validate again here. It was already done before payment.
+  
     try {
       const formData = new FormData();
       const appointmentRequest = {
-        doctorEmail,
-        doctorName,
-        slot,
-        phoneNo,
-        problemDescription,
+        doctorEmail: bookForm.doctorEmail,
+        doctorName: bookForm.doctorName,
+        slot: bookForm.slot,
+        phoneNo: bookForm.phoneNo,
+        problemDescription: bookForm.problemDescription,
         appointmentDate: date,
         specialization: selectedSpecialization,
         patientEmail: user.email,
       };
+  
       formData.append('data', new Blob([JSON.stringify(appointmentRequest)], { type: 'application/json' }));
-      if (reportFile) {
-        formData.append('report', reportFile);
-      }
-
+      if (reportFile) formData.append('report', reportFile);
+  
       const res = await API.post('/appointments', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
+  
       setBookMsg(res.data);
       fetchAppointments(user.email);
       setDate('');
@@ -563,13 +590,27 @@ const PatientHome = () => {
         doctorName: '',
         slot: '',
         phoneNo: '',
-        problemDescription: '',
+        problemDescription: ''
       });
       setReportFile(null);
+      setShowPaymentModal(false);
     } catch (err) {
       setBookMsg(err.response?.data || 'Something went wrong.');
     }
   };
+  const handleBook = async (e) => {
+    e.preventDefault();
+    setBookMsg('');
+  
+    const isValid = await handleValidate(); // ✅ Validation here
+    if (!isValid) return;
+  
+    setShowPaymentModal(true); // ✅ Only proceed to payment modal if valid
+  };
+    
+  
+
+
 
   const handleLogout = async (auto = false) => {
     try {
@@ -741,9 +782,21 @@ const PatientHome = () => {
                   onChange={e => setReportFile(e.target.files[0])}
                 />
               </label>
-              <button type="submit">Book Now</button>
+              <button type="submit">Proceed to Payment</button>
+
             </form>
-            {bookMsg && <p className={bookMsg.toLowerCase().includes('success') ? 'modal-success' : 'modal-error'}>{bookMsg}</p>}
+            {showPaymentModal && (
+  <AppointmentPayment
+    onAppointmentBooked={handleFinalBooking}
+  />
+)}
+
+            {typeof bookMsg === 'string' && (
+  <p className={bookMsg.toLowerCase().includes('success') ? 'modal-success' : 'modal-error'}>
+    {bookMsg}
+  </p>
+)}
+
           </>
         ) : activeTab === 'bookings' ? (
           <>
