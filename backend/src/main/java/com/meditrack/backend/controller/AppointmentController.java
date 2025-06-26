@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -29,6 +30,10 @@ public class AppointmentController {
 	
 	@Autowired
     private AppointmentService appointmentService;
+@PostMapping("/validate")
+public ResponseEntity<String> validateAppointment(@RequestBody AppointmentRequest request) {
+    return appointmentService.validateAppointmentRequest(request);
+}
 
     @GetMapping("/available-doctors")
     public List<String> getAvailableDoctors(@RequestParam String date) {

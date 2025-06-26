@@ -73,80 +73,79 @@ public class AppointmentService {
             .collect(Collectors.toList());
     }
 
-    public ResponseEntity<String> bookAppointment(AppointmentRequest request, MultipartFile reportFile) {
-        String patientEmail = request.getPatientEmail();
-        String doctorEmail = request.getDoctorEmail();
-        LocalDate date = request.getAppointmentDate();
+   public ResponseEntity<String> validateAppointmentRequest(AppointmentRequest request) {
+    String patientEmail = request.getPatientEmail();
+    String doctorEmail = request.getDoctorEmail();
+    LocalDate date = request.getAppointmentDate();
 
-        if (userRepo.findByEmail(patientEmail).isEmpty()) {
-            return ResponseEntity.badRequest().body("Patient is not registered.");
-        }
-        if (userRepo.findByEmail(doctorEmail).isEmpty()) {
-            return ResponseEntity.badRequest().body("Doctor is not registered.");
-        }
-        
-        if (date.isBefore(LocalDate.now())) {
-            return ResponseEntity.badRequest().body("You cannot book appointment for past days.");
-        }
-
-        if (date.isBefore(LocalDate.now())) {
-            return ResponseEntity.badRequest().body("You cannot book appointment for past days.");
-        }
-        
-        // Max 2 appointments/day per patient
-        long todayCount = appointmentRepo.countByPatientEmailAndAppointmentDate(patientEmail, date);
-        if (todayCount >= 2) {
-            return ResponseEntity.badRequest().body("You cannot book more than 2 appointments on the same day.");
-        }
-
-
-        // Problem description validation
-        String problem = request.getProblemDescription();
-        if (problem == null || problem.trim().isEmpty()) {
-            return ResponseEntity.badRequest().body("Problem description cannot be empty.");
-        }
-        if (problem.length() > 200) {
-            return ResponseEntity.badRequest().body("Problem description must be less than 200 characters.");
-        }
-
-        // Validate slot timing
-        String requestedSlot = request.getSlot();
-        List<String> booked = appointmentRepo.findSlotsByDoctorAndDate(doctorEmail, date);
-        if (booked.contains(requestedSlot)) {
-            return ResponseEntity.badRequest().body("Selected slot is already booked.");
-        }
-
-        // 1-hour buffer check for same-day
-        if (date.isEqual(LocalDate.now())) {
-            try {
-                LocalTime slotTime = LocalTime.parse(requestedSlot, TIME_FORMATTER);
-                if (slotTime.isBefore(LocalTime.now().plusHours(1))) {
-                    return ResponseEntity.badRequest().body("Slot must be at least 1 hour ahead of current time.");
-                }
-            } catch (DateTimeParseException e) {
-                return ResponseEntity.badRequest().body("Invalid slot format.");
-            }
-        }
-
-        Appointment app = new Appointment();
-        app.setPatientEmail(patientEmail);
-        app.setDoctorEmail(doctorEmail);
-        app.setDoctorName(request.getDoctorName());
-        app.setAppointmentDate(date);
-        app.setSlot(requestedSlot);
-        app.setPhoneNo(request.getPhoneNo());
-        app.setProblemDescription(problem.trim());
-        app.setStatus("PENDING");
-        app.setCreatedAt(LocalDateTime.now());
-        
-        if(reportFile != null && !reportFile.isEmpty()) {
-        	String filePath = fileStorageService.saveFile(reportFile);
-        	app.setPatientReportPath(filePath);
-        }
-
-        appointmentRepo.save(app);
-        return ResponseEntity.ok("Appointment booked successfully.");
+    if (userRepo.findByEmail(patientEmail).isEmpty()) {
+        return ResponseEntity.badRequest().body("Patient is not registered.");
     }
+    if (userRepo.findByEmail(doctorEmail).isEmpty()) {
+        return ResponseEntity.badRequest().body("Doctor is not registered.");
+    }
+    if (date.isBefore(LocalDate.now())) {
+        return ResponseEntity.badRequest().body("You cannot book appointment for past days.");
+    }
+
+    long todayCount = appointmentRepo.countByPatientEmailAndAppointmentDate(patientEmail, date);
+    if (todayCount >= 2) {
+        return ResponseEntity.badRequest().body("You cannot book more than 2 appointments on the same day.");
+    }
+
+    String problem = request.getProblemDescription();
+    if (problem == null || problem.trim().isEmpty()) {
+        return ResponseEntity.badRequest().body("Problem description cannot be empty.");
+    }
+    if (problem.length() > 200) {
+        return ResponseEntity.badRequest().body("Problem description must be less than 200 characters.");
+    }
+
+    String requestedSlot = request.getSlot();
+    List<String> booked = appointmentRepo.findSlotsByDoctorAndDate(doctorEmail, date);
+    if (booked.contains(requestedSlot)) {
+        return ResponseEntity.badRequest().body("Selected slot is already booked.");
+    }
+
+    if (date.isEqual(LocalDate.now())) {
+        try {
+            LocalTime slotTime = LocalTime.parse(requestedSlot, TIME_FORMATTER);
+            if (slotTime.isBefore(LocalTime.now().plusHours(1))) {
+                return ResponseEntity.badRequest().body("Slot must be at least 1 hour ahead of current time.");
+            }
+        } catch (DateTimeParseException e) {
+            return ResponseEntity.badRequest().body("Invalid slot format.");
+        }
+    }
+
+    return ResponseEntity.ok("Validation passed");
+}
+public ResponseEntity<String> bookAppointment(AppointmentRequest request, MultipartFile reportFile) {
+    ResponseEntity<String> validationResult = validateAppointmentRequest(request);
+    if (!validationResult.getStatusCode().is2xxSuccessful()) {
+        return validationResult; // If validation fails, return error directly
+    }
+
+    Appointment app = new Appointment();
+    app.setPatientEmail(request.getPatientEmail());
+    app.setDoctorEmail(request.getDoctorEmail());
+    app.setDoctorName(request.getDoctorName());
+    app.setAppointmentDate(request.getAppointmentDate());
+    app.setSlot(request.getSlot());
+    app.setPhoneNo(request.getPhoneNo());
+    app.setProblemDescription(request.getProblemDescription().trim());
+    app.setStatus("PENDING");
+    app.setCreatedAt(LocalDateTime.now());
+
+    if (reportFile != null && !reportFile.isEmpty()) {
+        String filePath = fileStorageService.saveFile(reportFile);
+        app.setPatientReportPath(filePath);
+    }
+
+    appointmentRepo.save(app);
+    return ResponseEntity.ok("Appointment booked successfully.");
+}
+
 
     public List<Appointment> getAppointmentsByPatient(String email) {
         return appointmentRepo.findByPatientEmailOrderByAppointmentDateDesc(email);
