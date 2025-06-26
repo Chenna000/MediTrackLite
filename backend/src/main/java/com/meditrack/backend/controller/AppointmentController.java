@@ -29,10 +29,6 @@ public class AppointmentController {
 	
 	@Autowired
     private AppointmentService appointmentService;
-@PostMapping("/validate")
-public ResponseEntity<String> validateAppointment(@RequestBody AppointmentRequest request) {
-    return appointmentService.validateAppointmentRequest(request);
-}
 
     @GetMapping("/available-doctors")
     public List<String> getAvailableDoctors(@RequestParam String date) {
