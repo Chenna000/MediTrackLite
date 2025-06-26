@@ -23,8 +23,9 @@ public class WebSecurityConfig {
 	        .cors(cors -> {})
 	        .csrf(AbstractHttpConfigurer::disable)
 	        .authorizeHttpRequests(auth ->
-	            auth.requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/logout").permitAll()
-	                .anyRequest().authenticated()
+	            auth.requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/logout", "/api/payment/**").permitAll()
+	                
+                            .anyRequest().authenticated()
 	        )
 	        .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
 	        .addFilterBefore(new SessionAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class); //  Register the filter
