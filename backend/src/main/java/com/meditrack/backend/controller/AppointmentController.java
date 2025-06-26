@@ -30,10 +30,11 @@ public class AppointmentController {
 	
 	@Autowired
     private AppointmentService appointmentService;
-@PostMapping("/validate")
-public ResponseEntity<String> validateAppointment(@RequestBody AppointmentRequest request) {
-    return appointmentService.validateAppointmentRequest(request);
-}
+	
+	@PostMapping("/validate")
+	public ResponseEntity<String> validateAppointment(@RequestBody AppointmentRequest request) {
+	    return appointmentService.validateAppointmentRequest(request);
+	}
 
     @GetMapping("/available-doctors")
     public List<String> getAvailableDoctors(@RequestParam String date) {
@@ -45,11 +46,6 @@ public ResponseEntity<String> validateAppointment(@RequestBody AppointmentReques
         return appointmentService.getAvailableSlots(doctorEmail, LocalDate.parse(date));
     }
 
-//    @PostMapping
-//    public ResponseEntity<String> bookAppointment(@RequestBody AppointmentRequest request) {
-//        return appointmentService.bookAppointment(request);
-//    }
-    
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> bookAppointment(
         @RequestPart("data") AppointmentRequest request,
