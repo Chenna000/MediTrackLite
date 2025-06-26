@@ -44,6 +44,11 @@ public ResponseEntity<String> validateAppointment(@RequestBody AppointmentReques
     public List<String> getAvailableSlots(@RequestParam String doctorEmail, @RequestParam String date) {
         return appointmentService.getAvailableSlots(doctorEmail, LocalDate.parse(date));
     }
+
+//    @PostMapping
+//    public ResponseEntity<String> bookAppointment(@RequestBody AppointmentRequest request) {
+//        return appointmentService.bookAppointment(request);
+//    }
     
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> bookAppointment(

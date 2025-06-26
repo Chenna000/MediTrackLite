@@ -121,11 +121,13 @@ public class AppointmentService {
     return ResponseEntity.ok("Validation passed");
 }
 public ResponseEntity<String> bookAppointment(AppointmentRequest request, MultipartFile reportFile) {
+    // ✅ Step 1: Validate the request first using existing reusable method
     ResponseEntity<String> validationResult = validateAppointmentRequest(request);
     if (!validationResult.getStatusCode().is2xxSuccessful()) {
         return validationResult; // If validation fails, return error directly
     }
 
+    // ✅ Step 2: Save appointment to DB
     Appointment app = new Appointment();
     app.setPatientEmail(request.getPatientEmail());
     app.setDoctorEmail(request.getDoctorEmail());
@@ -137,11 +139,13 @@ public ResponseEntity<String> bookAppointment(AppointmentRequest request, Multip
     app.setStatus("PENDING");
     app.setCreatedAt(LocalDateTime.now());
 
+    // ✅ Step 3: Handle optional report file upload
     if (reportFile != null && !reportFile.isEmpty()) {
         String filePath = fileStorageService.saveFile(reportFile);
         app.setPatientReportPath(filePath);
     }
 
+    // ✅ Step 4: Save to repository
     appointmentRepo.save(app);
     return ResponseEntity.ok("Appointment booked successfully.");
 }
