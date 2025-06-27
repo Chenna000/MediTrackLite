@@ -29,6 +29,19 @@ public class User {
 
 
 
+		public User( String name, String email, String password, String role, String specialization,
+				String status, String backupmail) {
+			this.name = name;
+			this.email = email;
+			this.password = password;
+			this.role = role;
+			this.specialization = specialization;
+			this.status = status;
+			this.backupmail = backupmail;
+		}
+
+
+
 		@Id
 	    @GeneratedValue(strategy = GenerationType.IDENTITY)
 	    private Long id;
@@ -47,9 +60,17 @@ public class User {
 	    @Column(name = "status")
 	    private String status;
 	    
+	    private String backupmail;
 	    
 	    
-	    public String getStatus() {
+	    
+	    public String getBackupmail() {
+			return backupmail;
+		}
+		public void setBackupmail(String backupmail) {
+			this.backupmail = backupmail;
+		}
+		public String getStatus() {
 			return status;
 		}
 		public void setStatus(String status) {

@@ -32,6 +32,7 @@ const NAV_ITEMS = [
   { label: "Users", key: "users" },
   { label: "Appointments", key: "appointments" },
   { label: "Analytics", key: "analytics" },
+  { label: "Feedback", key: "feedback" },
 ];
 
 const AdminHome = () => {
@@ -52,7 +53,23 @@ const AdminHome = () => {
   const [adminUser, setAdminUser] = useState({ name: "Admin", email: "" });
   const [deletingUser, setDeletingUser] = useState(null);
 
+  // Feedback state
+  const [feedbacks, setFeedbacks] = useState([]);
+  const [deletingFeedbackId, setDeletingFeedbackId] = useState(null);
+
   const timeoutRef = useRef(null);
+
+  // Helper to refresh all admin data
+  const refreshAllAdminData = () => {
+    fetchUsers(userStatusFilter);
+    fetchUserCounts();
+    fetchDoctorRatings();
+    fetchStats();
+    fetchAppointmentsByPatient();
+    fetchAppointmentsByDoctor();
+    fetchAppointments(appointmentStatusFilter);
+    fetchFeedbacks();
+  };
 
   // Session inactivity and back button prevention
   useEffect(() => {
@@ -87,6 +104,7 @@ const AdminHome = () => {
     fetchDoctorRatings();
     fetchAppointmentsByPatient();
     fetchAppointmentsByDoctor();
+    fetchFeedbacks();
 
     return () => {
       clearTimeout(timeoutRef.current);
@@ -217,6 +235,16 @@ const AdminHome = () => {
     }
   };
 
+  // Fetch all feedbacks for admin feedback tab
+  const fetchFeedbacks = async () => {
+    try {
+      const res = await API.get("/admin/feedbacks");
+      setFeedbacks(res.data);
+    } catch {
+      setFeedbacks([]);
+    }
+  };
+
   const handleUserStatusChange = async (id, newStatus) => {
     try {
       await API.put(`/admin/users/${id}/status`, null, { params: { status: newStatus } });
@@ -253,6 +281,22 @@ const AdminHome = () => {
       setTimeout(() => setToast(""), 2000);
     }
     setDeletingUser(null);
+  };
+
+  // Delete feedback logic
+  const handleDeleteFeedback = async (appointmentId) => {
+    if (!window.confirm("Are you sure you want to delete feedback for this appointment?")) return;
+    setDeletingFeedbackId(appointmentId);
+    try {
+      await API.delete(`/admin/appointment/${appointmentId}`);
+      setToast("Feedback deleted successfully.");
+      fetchFeedbacks();
+      setTimeout(() => setToast(""), 2000);
+    } catch {
+      setToast("Failed to delete feedback.");
+      setTimeout(() => setToast(""), 2000);
+    }
+    setDeletingFeedbackId(null);
   };
 
   const handleLogout = async (auto = false) => {
@@ -526,6 +570,62 @@ const AdminHome = () => {
                           {app.status}
                         </td>
                         <td>{app.problemDescription}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Feedback */}
+        {activeTab === "feedback" && (
+          <div className="admin-section">
+            <h3>All Feedbacks</h3>
+            <div className="admin-table-container">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Feedback ID</th>
+                    <th>Appointment ID</th>
+                    <th>Rating</th>
+                    <th>Comment</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {feedbacks.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} style={{ color: "#888", textAlign: "center" }}>
+                        No feedbacks found.
+                      </td>
+                    </tr>
+                  ) : (
+                    feedbacks.map((fb) => (
+                      <tr key={fb.id}>
+                        <td>{fb.feedbackId}</td>
+                        <td>{fb.appointmentId}</td>
+                        <td>
+                          <span style={{ color: "#ffc107", fontWeight: 600 }}>
+                            {fb.rating} ★
+                          </span>
+                        </td>
+                        <td>{fb.comment}</td>
+                        <td>
+                          <button
+                            className="admin-action-btn"
+                            style={{
+                              background: "#b71c1c",
+                              opacity: deletingFeedbackId === fb.appointmentId ? 0.7 : 1,
+                              pointerEvents: deletingFeedbackId === fb.appointmentId ? "none" : "auto",
+                            }}
+                            onClick={() => handleDeleteFeedback(fb.appointmentId)}
+                            disabled={deletingFeedbackId === fb.appointmentId}
+                          >
+                            {deletingFeedbackId === fb.appointmentId ? "Deleting..." : "Delete"}
+                          </button>
+                        </td>
                       </tr>
                     ))
                   )}

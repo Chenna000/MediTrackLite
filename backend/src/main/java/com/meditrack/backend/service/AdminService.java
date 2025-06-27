@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.meditrack.backend.model.Appointment;
+import com.meditrack.backend.model.Feedback;
+import com.meditrack.backend.model.FeedbackDto;
 import com.meditrack.backend.model.User;
 import com.meditrack.backend.repository.AppointmentRepository;
 import com.meditrack.backend.repository.FeedbackRepository;
@@ -111,5 +114,25 @@ public class AdminService {
         userRepo.deleteByEmail(email);
 
         return "User and all associated data deleted successfully.";
+    }
+    
+    public boolean deleteFeedbackByAppointmentId(Long appointmentId) {
+        Optional<Feedback> feedbackOpt = feedbackRepo.findByAppointmentId(appointmentId);
+        if (feedbackOpt.isPresent()) {
+            feedbackRepo.delete(feedbackOpt.get());
+            return true;
+        }
+        return false;
+    }
+    
+    public List<FeedbackDto> getAllSimpleFeedbacks() {
+        return feedbackRepo.findAll().stream().map(fb ->{
+        	return new FeedbackDto(
+        			fb.getId(),
+        			fb.getRating(),
+        			fb.getComment(),
+        			fb.getAppointment().getId()
+        			);
+        }).collect(Collectors.toList());
     }
 }

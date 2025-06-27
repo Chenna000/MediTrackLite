@@ -23,7 +23,7 @@ public class WebSecurityConfig {
 	        .cors(cors -> {})
 	        .csrf(AbstractHttpConfigurer::disable)
 	        .authorizeHttpRequests(auth ->
-	            auth.requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/logout", "/api/payment/**").permitAll()
+	            auth.requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/logout", "/api/payment/**","/auth/forgot-password", "/auth/verify-otp", "/auth/reset-password").permitAll()
 	                
                             .anyRequest().authenticated()
 	        )

@@ -30,6 +30,8 @@ public class AppointmentService {
     @Autowired
     private FileStorageService fileStorageService;
     
+    @Autowired
+    private EmailService emailService;
   
 
     private static final List<String> ALL_SLOTS = List.of(
@@ -143,6 +145,42 @@ public ResponseEntity<String> bookAppointment(AppointmentRequest request, Multip
     }
 
     appointmentRepo.save(app);
+    String user1 = userRepo.findByEmail(request.getPatientEmail()).get().getName();
+    String backupEmail = userRepo.findByEmail(request.getPatientEmail()).get().getBackupmail();
+    String subject = "Appointment Booked Successfully!!!!";
+    String body = "<html>" +
+    	    "<body style='font-family: Arial, sans-serif; color: #333;'>"
+    	    + "<h2 style='color: #2a9df4;'>Appointment Confirmation</h2>"
+    	    + "<p>Dear <strong>" + user1 + "</strong>,</p>"
+    	    + "<p>Your appointment with <strong>Dr. " + request.getDoctorName() + "</strong> has been successfully booked.</p>"
+    	    + "<p>We will notify you once the doctor reviews and approves your appointment. This usually happens within 30 minutes.</p><br/>"
+    	    +"<ul>"
+    	    +"<li><strong>Date: <strong>"+request.getAppointmentDate()+"</li>"
+    	    +"<li><strong>Time: <strong>"+request.getSlot()+"</li>"
+    	    + "<br/><br/><p style='margin-top: 20px;'>Thank you for choosing <strong>MediTrackLite</strong>!</p>"
+    	    + "<p>Best regards,<br/>Team MediTrackLite</p>"
+    	    + "</body>"
+    	    + "</html>";
+
+    String backupEmailDoc = userRepo.findByEmail(request.getDoctorEmail()).get().getBackupmail();
+    String subjectDoc = "New Appointment Scheduled"; 
+    String bodyDoc = "<html>" + 
+        "<body style='font-family: Arial, sans-serif; color: #333;'>" +
+        "<h2 style='color: #28a745;'>New Appointment Notification</h2>" +
+        "<p>Dear <strong>Dr. " + request.getDoctorName() + "</strong>,</p>" +
+        "<p>A new appointment has been booked by <strong>" + user1 + "</strong>.</p>" +
+        "<p>Please review and take action on the appointment as soon as possible.</p>" +
+        "<ul>" +
+        "<li><strong>Date:</strong> " + request.getAppointmentDate() + "</li>" +
+        "<li><strong>Time:</strong> " + request.getSlot() + "</li>" +
+        "</ul>" +
+        "<p style='margin-top: 20px;'>You can manage this appointment from your dashboard.</p>" +
+        "<p>Best regards,<br/>Team MediTrackLite</p>" +
+        "</body>" +
+        "</html>";
+
+    emailService.sendEmail(backupEmail, subject, body);
+    emailService.sendEmail(backupEmailDoc, subjectDoc, bodyDoc);
     return ResponseEntity.ok("Appointment booked successfully.");
 }
 
@@ -169,6 +207,10 @@ public ResponseEntity<String> bookAppointment(AppointmentRequest request, Multip
         Appointment app = optional.get();
         app.setStatus(status.toUpperCase());
         appointmentRepo.save(app);
+        	
+        if(!status.equals("IN_PROGRESS")) {
+        	statusUpdateEmail(status,optional);
+        }
        
         return ResponseEntity.ok("Appointment status updated to " + status.toUpperCase() + ".");
     }
@@ -195,6 +237,7 @@ public ResponseEntity<String> bookAppointment(AppointmentRequest request, Multip
         toReject.forEach(appt -> {
             appt.setStatus("REJECTED");
             appointmentRepo.save(appt);
+            statusUpdateEmail("REJECTED",appt);
             System.out.println("Auto-rejected appointment ID: " + appt.getId());
         });
     }
@@ -244,4 +287,67 @@ public ResponseEntity<String> bookAppointment(AppointmentRequest request, Multip
             }
         }
     }
+    
+    public void statusUpdateEmail(String status, Optional<Appointment> appointment) {
+    	
+    	String doctorName = appointment.get().getDoctorName();
+    	String patientName = userRepo.findByEmail(appointment.get().getPatientEmail()).get().getName();
+    	LocalDate date = appointment.get().getAppointmentDate();
+    	String time = appointment.get().getSlot();
+    	String backupEmail = userRepo.findByEmail(appointment.get().getPatientEmail()).get().getBackupmail();
+    	
+    	String subject = "Appointment Status Update";
+        String statusMessage = "";
+
+        switch (status.toUpperCase()) {
+            case "ACCEPTED":
+                statusMessage = "has been <strong>ACCEPTED</strong> by Dr. " + doctorName + ".";
+                break;
+            case "REJECTED":
+                statusMessage = "has been <strong>REJECTED</strong> by Dr. " + doctorName + ". </p><br/> <p>We apologize for the inconvenience. You may try booking another slot at your convenience.<br/> Your amount will be refunded within 2 business days." ;
+                break;
+            default:
+                statusMessage = "has been updated.";
+        }
+        
+        String body = "<html>" +
+                "<body style='font-family: Arial, sans-serif; color: #333;'>" +
+                "<h2 style='color: #2a9df4;'>Appointment Status Update</h2>" +
+                "<p>Dear <strong>" + patientName + "</strong>,</p>" +
+                "<p>Your appointment with <strong>Dr. " + doctorName + "</strong> on <strong>" + date + "</strong> at <strong>" + time + "</strong> " +
+                statusMessage + "</p>" +
+                "<p>Thank you for using <strong>MediTrackLite</strong>.</p>" +
+                "<p>Regards,<br/>Team MediTrackLite</p>" +
+                "</body>" +
+                "</html>";
+        
+        emailService.sendEmail(backupEmail, subject, body);
+    }
+    
+	public void statusUpdateEmail(String status, Appointment appointment) {
+	    	
+	    	String doctorName = appointment.getDoctorName();
+	    	String patientName = userRepo.findByEmail(appointment.getPatientEmail()).get().getName();
+	    	LocalDate date = appointment.getAppointmentDate();
+	    	String time = appointment.getSlot();
+	    	String backupEmail = userRepo.findByEmail(appointment.getPatientEmail()).get().getBackupmail();
+	    	
+	    	String subject = "Appointment Status Update";
+	    	String statusMessage = "has been <strong style='color:red;'>auto-rejected</strong> due to doctor unavailability. Please try booking again at a different time.";
+	    	String body = "<html>" +
+	    	    "<body style='font-family: Arial, sans-serif; color: #333;'>" +
+	    	    "<h2 style='color: #d9534f;'>Appointment Status Update</h2>" +
+	    	    "<p>Dear <strong>" + patientName + "</strong>,</p>" +
+	    	    "<p>We regret to inform you that your appointment with <strong>Dr. " + doctorName + "</strong> " +
+	    	    "scheduled on <strong>" + date + "</strong> at <strong>" + time + "</strong> " + statusMessage + "</p>" +
+	    	    "<p>We apologize for the inconvenience. You may try booking another slot at your convenience.</p>" +
+	    	    "<p>Your amount will be refunded within 2 business days.</p>"+
+	    	    "<p>Thank you for using <strong>MediTrackLite</strong>.</p>" +
+	    	    "<p>Best regards,<br/>Team MediTrackLite</p>" +
+	    	    "</body>" +
+	    	    "</html>";
+
+	        
+	        emailService.sendEmail(backupEmail, subject, body);
+	    }
 }

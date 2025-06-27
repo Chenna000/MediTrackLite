@@ -6,6 +6,7 @@ import './../css/RegistrationPage.css';
 const RegisterPage = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [backupmail, setBackupmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState('PATIENT');
@@ -20,13 +21,17 @@ const RegisterPage = () => {
       setSuccess('');
       return;
     }
-
+    if (!backupmail) {
+      setError('Backup email is required');
+      setSuccess('');
+      return;
+    }
     if (password !== confirmPassword) {
-        setError('Passwords do not match');
-        setSuccess('');
-        return;
-      }
-      if (role === 'DOCTOR' && !specialization.trim()) {
+      setError('Passwords do not match');
+      setSuccess('');
+      return;
+    }
+    if (role === 'DOCTOR' && !specialization.trim()) {
       setError('Specialization is required for doctors');
       setSuccess('');
       return;
@@ -36,9 +41,10 @@ const RegisterPage = () => {
       const payload = {
         name,
         email,
-        password, // match backend field!
+        password,
         role,
-        specialization: role === 'DOCTOR' ? specialization :"PATIENT", // only include if doctor
+        specialization: role === 'DOCTOR' ? specialization : "PATIENT",
+        backupmail
       };
 
       // Send registration request to the backend
@@ -53,59 +59,66 @@ const RegisterPage = () => {
     }
   };
 
-return (
-  <div className="register-page">
-    <div className="register-card">
-      <h2>MediTrack Registration</h2>
-      {error && <p className="error">{error}</p>}
-      {success && <p className="success">{success}</p>}
+  return (
+    <div className="register-page">
+      <div className="register-card">
+        <h2>MediTrack Registration</h2>
+        {error && <p className="error">{error}</p>}
+        {success && <p className="success">{success}</p>}
 
-      <input
-        placeholder="Full Name"
-        value={name}
-        onChange={e => setName(e.target.value)}
-        onCopy={e => e.preventDefault()}
-        onPaste={e => e.preventDefault()}
-        onCut={e => e.preventDefault()}
-      />
-      <input
-        placeholder="Email (must end with @meditrack.local)"
-        value={email}
-        onChange={e => setEmail(e.target.value)}
-        onCopy={e => e.preventDefault()}
-        onPaste={e => e.preventDefault()}
-        onCut={e => e.preventDefault()}
-      />
-      <input
-        placeholder="Password"
-        type="password"
-        value={password}
-        onChange={e => setPassword(e.target.value)}
-        onCopy={e => e.preventDefault()}
-        onPaste={e => e.preventDefault()}
-        onCut={e => e.preventDefault()}
-      />
-      
-      
-      <input
-        placeholder=" Confirm Password"
-        type="password"
-        value={confirmPassword}
-        onChange={e => setConfirmPassword(e.target.value)}
-        onCopy={e => e.preventDefault()}
-        onPaste={e => e.preventDefault()}
-        onCut={e => e.preventDefault()}
-      /> 
-      <select
-        value={role}
-        onChange={e => setRole(e.target.value)}
-      >
-        <option value="null">Select Role</option>
-        <option value="PATIENT">Patient</option>
-        <option value="DOCTOR">Doctor</option>
-      </select>
+        <input
+          placeholder="Full Name"
+          value={name}
+          onChange={e => setName(e.target.value)}
+          onCopy={e => e.preventDefault()}
+          onPaste={e => e.preventDefault()}
+          onCut={e => e.preventDefault()}
+        />
+        <input
+          placeholder="Email (must end with @meditrack.local)"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          onCopy={e => e.preventDefault()}
+          onPaste={e => e.preventDefault()}
+          onCut={e => e.preventDefault()}
+        />
+        <input
+          placeholder="Backup Email"
+          type="email"
+          value={backupmail}
+          onChange={e => setBackupmail(e.target.value)}
+          onCopy={e => e.preventDefault()}
+          onPaste={e => e.preventDefault()}
+          onCut={e => e.preventDefault()}
+        />
+        <input
+          placeholder="Password"
+          type="password"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          onCopy={e => e.preventDefault()}
+          onPaste={e => e.preventDefault()}
+          onCut={e => e.preventDefault()}
+        />
+        <input
+          placeholder=" Confirm Password"
+          type="password"
+          value={confirmPassword}
+          onChange={e => setConfirmPassword(e.target.value)}
+          onCopy={e => e.preventDefault()}
+          onPaste={e => e.preventDefault()}
+          onCut={e => e.preventDefault()}
+        /> 
+        <select
+          value={role}
+          onChange={e => setRole(e.target.value)}
+        >
+          <option value="null">Select Role</option>
+          <option value="PATIENT">Patient</option>
+          <option value="DOCTOR">Doctor</option>
+        </select>
 
-      {role === 'DOCTOR' && (
+        {role === 'DOCTOR' && (
           <input
             placeholder="Specialization"
             value={specialization}
@@ -115,11 +128,11 @@ return (
             onCut={e => e.preventDefault()}
           />
         )}
-      <button onClick={handleRegister}>Register</button>
-      <p>Already have an account? <a href="/login">Login</a></p>
+        <button onClick={handleRegister}>Register</button>
+        <p>Already have an account? <a href="/login">Login</a></p>
+      </div>
     </div>
-  </div>
-);
+  );
 };
 
 export default RegisterPage;

@@ -6,8 +6,16 @@ public class RegisterRequest {
 	private String password;
 	private String role;
 	private String specialization;
+	private String backupmail;
 	
 	
+	
+	public String getBackupmail() {
+		return backupmail;
+	}
+	public void setBackupmail(String backupmail) {
+		this.backupmail = backupmail;
+	}
 	public String getSpecialization() {
 		return specialization;
 	}
@@ -49,5 +57,16 @@ public class RegisterRequest {
 	public RegisterRequest() {
 		
 	}
+	public RegisterRequest(String name, String email, String password, String role, String specialization,
+			String backupmail) {
+		super();
+		this.name = name;
+		this.email = email;
+		this.password = password;
+		this.role = role;
+		this.specialization = specialization;
+		this.backupmail = backupmail;
+	}
+	
 	
 }

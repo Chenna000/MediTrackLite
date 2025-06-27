@@ -16,5 +16,8 @@ public interface FeedbackRepository extends JpaRepository<Feedback,Long> {
     boolean existsByAppointmentId(Long appointmentId);
     List<Feedback> findByAppointment_DoctorEmail(String doctorEmail);
     void deleteByAppointmentIdIn(List<Long> appointmentIds);
+    Optional<Feedback> findByAppointmentId(Long appointmentId);
+    void deleteByAppointmentId(Long appointmentId);
+
 
 }

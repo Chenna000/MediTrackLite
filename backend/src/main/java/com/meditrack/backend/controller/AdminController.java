@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.meditrack.backend.model.Appointment;
+import com.meditrack.backend.model.FeedbackDto;
 import com.meditrack.backend.model.User;
 import com.meditrack.backend.service.AdminService;
 
@@ -73,5 +75,17 @@ public class AdminController {
 	        return ResponseEntity.ok(result);
 	    }
 	    
+	    @DeleteMapping("/appointment/{appointmentId}")
+	    public ResponseEntity<String> deleteFeedbackByAppointmentId(@PathVariable Long appointmentId) {
+	        boolean deleted = adminService.deleteFeedbackByAppointmentId(appointmentId);
+	        return deleted ?
+	            ResponseEntity.ok("Feedback linked to appointment deleted successfully.") :
+	            ResponseEntity.status(HttpStatus.NOT_FOUND).body("No feedback found for this appointment.");
+	    }
+	    
+	    @GetMapping("/feedbacks")
+	    public ResponseEntity<List<FeedbackDto>> getSimpleFeedbacks() {
+	        return ResponseEntity.ok(adminService.getAllSimpleFeedbacks());
+	    }
 
 }
