@@ -18,6 +18,7 @@ This project was built using **React (Vite)** for the frontend and **Spring Boot
 - Spring Data JPA for database access
 - BCrypt for password hashing
 - Validation using annotations
+- Java Mail Sender for email based notifications
 - REST APIs
 - Eclipse IDE
 
@@ -28,8 +29,8 @@ This project was built using **React (Vite)** for the frontend and **Spring Boot
 
 ### 👤 Authentication
 - Secure login/logout with session-based access
-- Role-based dashboards for `PATIENT` and `DOCTOR`
-- Change password and profile view functionality
+- Role-based dashboards for `PATIENT`, `DOCTOR` and `ADMIN`
+- Change password, forgot password and profile view functionality
 - Password strength constraints & session protection
 
 ### 🩺 Patient Module
@@ -50,6 +51,17 @@ This project was built using **React (Vite)** for the frontend and **Spring Boot
 - Can see feedback provided by patients and appointment analytics
 - Otionally upload lab reports during prescription upload
 
+### 🔒 Admin Module
+- Dashboard Overview: View total number of doctors, patients, and appointments
+- User Management:
+    - View all users(doctors and patients)
+    - Deactivate or remove users
+    - User needs admin approval after registration
+- Appointment Monitoring
+    - Track pending, accepted, rejected, and completed appointments
+    - Delete inappropriate feedbacks 
+- View Analytical and Statistical data
+  
 ### 💊 Prescription Management
 - Add multiple medicines per appointment
 - Consultation notes 
@@ -65,6 +77,12 @@ This project was built using **React (Vite)** for the frontend and **Spring Boot
   - 30 minutes (if appointment is scheduled soon)
   - 12 hours (for general cleanup)
 - Auto-update ACCEPTED appointments to IN_PROGRESS when slot time starts
+
+### 📧 Email Notification System
+- Appointment Conformation
+- Status Updates
+- Feedback Alerts
+- Forgot Password OTPs
 
 ### 🔒 Security Highlights
 - Passwords stored with BCrypt hashing
@@ -89,14 +107,14 @@ This project was built using **React (Vite)** for the frontend and **Spring Boot
 
 1. Open the frontend folder in VS Code
 2. Run these commands in Terminal:
-   npm install
-   npm run dev
+   - npm install
+   - npm run dev
 3. It will start on: "http://localhost:5173"
    
 ###  Sample API Endpoints
 - POST `/api/auth/register` – Register user
 - POST `/api/auth/login` – Login user
-- GET `/api/auth/profile` – Get logged-in user's data
+- GET `/api/auth/feedbacks` - Fetch list of feedbacks 
 - POST `/appointments` – Book appointment
 - GET `/appointments/doctor/pending` – Fetch doctor’s pending appointments
 - PUT `/appointments/{id}/status` – Accept/Reject appointment
@@ -105,10 +123,10 @@ This project was built using **React (Vite)** for the frontend and **Spring Boot
 
  ## Future Enhancements
 - Integreate Real time notifications to mobile number
-- Admin dashboard for hospital management
 - JWT-based token authentication
 - Mobile app with React Native
-- Analytics on appointments and user activity
+- Invoice Generation
+- Multi-language Support
 
 ## Requirements
 - Java 17+
