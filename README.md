@@ -78,6 +78,11 @@ This project was built using **React (Vite)** for the frontend and **Spring Boot
   - 12 hours (for general cleanup)
 - Auto-update ACCEPTED appointments to IN_PROGRESS when slot time starts
 
+### 💬 Chatbot Support System
+- Symptom to disease mapping
+- Common Medicine Advisory
+- Disease Awareness
+
 ### 📧 Email Notification System
 - Appointment Conformation
 - Status Updates
