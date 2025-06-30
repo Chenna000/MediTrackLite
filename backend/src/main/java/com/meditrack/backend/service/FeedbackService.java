@@ -13,6 +13,8 @@ import com.meditrack.backend.repository.AppointmentRepository;
 import com.meditrack.backend.repository.FeedbackRepository;
 import com.meditrack.backend.repository.UserRepository;
 
+import jakarta.transaction.Transactional;
+
 @Service
 public class FeedbackService {
 	
@@ -28,6 +30,7 @@ public class FeedbackService {
 	@Autowired
 	private EmailService emailService;
 	
+	@Transactional
 	public String submitFeedback(FeedbackRequest request) {
         Appointment appointment = appointmentRepo.findById(request.getAppointmentId())
                 .orElseThrow(() -> new RuntimeException("Appointment not found"));

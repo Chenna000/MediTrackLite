@@ -7,7 +7,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,6 +19,8 @@ import com.meditrack.backend.model.AppointmentRequest;
 import com.meditrack.backend.model.User;
 import com.meditrack.backend.repository.AppointmentRepository;
 import com.meditrack.backend.repository.UserRepository;
+
+import jakarta.transaction.Transactional;
 
 @Service
 public class AppointmentService {
@@ -74,7 +78,8 @@ public class AppointmentService {
             .filter(slot -> !booked.contains(slot)) // filter out already booked slots
             .collect(Collectors.toList());
     }
-
+   
+    @Transactional
    public ResponseEntity<String> validateAppointmentRequest(AppointmentRequest request) {
     String patientEmail = request.getPatientEmail();
     String doctorEmail = request.getDoctorEmail();
@@ -121,8 +126,9 @@ public class AppointmentService {
     }
 
     return ResponseEntity.ok("Validation passed");
-}
-public ResponseEntity<String> bookAppointment(AppointmentRequest request, MultipartFile reportFile) {
+}	
+    @Transactional
+    public ResponseEntity<String> bookAppointment(AppointmentRequest request, MultipartFile reportFile) {
     ResponseEntity<String> validationResult = validateAppointmentRequest(request);
     if (!validationResult.getStatusCode().is2xxSuccessful()) {
         return validationResult; // If validation fails, return error directly
@@ -142,6 +148,10 @@ public ResponseEntity<String> bookAppointment(AppointmentRequest request, Multip
     if (reportFile != null && !reportFile.isEmpty()) {
         String filePath = fileStorageService.saveFile(reportFile);
         app.setPatientReportPath(filePath);
+    }
+    List<String> booked = appointmentRepo.findSlotsByDoctorAndDate(app.getDoctorEmail(), app.getAppointmentDate());
+    if (booked.contains(app.getSlot())) {
+        return ResponseEntity.badRequest().body("Selected slot was just booked. Please try a different one.");
     }
 
     appointmentRepo.save(app);
@@ -192,7 +202,8 @@ public ResponseEntity<String> bookAppointment(AppointmentRequest request, Multip
     public List<Appointment> getAppointmentsByDoctor(String email) {
         return appointmentRepo.findByDoctorEmailOrderByAppointmentDateDesc(email);
     }
-
+    
+    @Transactional
     public ResponseEntity<String> updateAppointmentStatus(Long id, String status) {
         Optional<Appointment> optional = appointmentRepo.findById(id);
         if (optional.isEmpty()) {
@@ -206,7 +217,13 @@ public ResponseEntity<String> bookAppointment(AppointmentRequest request, Multip
         }
         Appointment app = optional.get();
         app.setStatus(status.toUpperCase());
-        appointmentRepo.save(app);
+        try {
+            appointmentRepo.save(app);
+        } catch (ObjectOptimisticLockingFailureException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body("Someone else updated this appointment. Please reload and try again.");
+        }
+
         	
         if(!status.equals("IN_PROGRESS")) {
         	statusUpdateEmail(status,optional);
@@ -289,6 +306,7 @@ public ResponseEntity<String> bookAppointment(AppointmentRequest request, Multip
     }
     
     public void statusUpdateEmail(String status, Optional<Appointment> appointment) {
+    	
     	
     	String doctorName = appointment.get().getDoctorName();
     	String patientName = userRepo.findByEmail(appointment.get().getPatientEmail()).get().getName();

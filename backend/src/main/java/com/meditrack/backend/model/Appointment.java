@@ -8,6 +8,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 
 @Entity
 @Table(name="appointments")
@@ -27,8 +28,16 @@ public class Appointment {
 	private String status;
 	private LocalDateTime createdAt;
 	private String patientReportPath;
+	@Version
+    private Integer version;
 	
 	
+	public Integer getVersion() {
+		return version;
+	}
+	public void setVersion(Integer version) {
+		this.version = version;
+	}
 	public String getPatientReportPath() {
 		return patientReportPath;
 	}
