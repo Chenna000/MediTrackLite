@@ -543,3 +543,186 @@ textarea {
   border-radius: 5px;
   cursor: pointer;
 }
+/* ============================
+   📱 Mobile Responsive Styles
+============================ */
+@media (max-width: 768px) {
+  .doctor-dashboard-container {
+    padding: 12px;
+  }
+
+  .dashboard-title {
+    font-size: 1.6rem;
+    margin-bottom: 16px;
+  }
+
+  .dashboard-content {
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .sidebar {
+    width: 100%;
+    position: static;
+    top: auto;
+    box-shadow: none;
+  }
+
+  .main-content {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .status-tabs {
+    gap: 8px;
+    justify-content: flex-start;
+    overflow-x: auto;
+    padding: 0 8px;
+  }
+
+  .status-tabs button {
+    font-size: 14px;
+    padding: 8px 12px;
+    white-space: nowrap;
+  }
+
+  .appointments-list {
+    max-height: none;
+    overflow-y: visible;
+    padding-right: 0;
+  }
+
+  .appointment-card {
+    padding: 16px;
+  }
+
+  .sidebar img {
+    width: 90px;
+    height: 90px;
+  }
+
+  .change-password-form {
+    padding: 16px;
+    margin-top: 16px;
+  }
+
+  .calendar-container,
+  .calendar-fullwidth-container {
+    width: 100%;
+    padding: 8px;
+  }
+
+  .fc-toolbar-title {
+    font-size: 1.2rem;
+    text-align: center;
+  }
+
+  .calendar-legend {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .calendar-wrapper {
+    padding: 12px;
+  }
+
+  .modal-container {
+    width: 95%;
+    padding: 16px;
+  }
+
+  .modal-title {
+    font-size: 18px;
+  }
+
+  .modal-content p {
+    font-size: 14px;
+  }
+
+  .appointment-card button {
+    margin-top: 8px;
+    width: 100%;
+    text-align: center;
+  }
+
+  .report-download-btn {
+    width: 100%;
+    text-align: center;
+  }
+}
+.appointments-feedback {
+  flex: 1;
+  margin-right: 24px;
+}
+
+.appointments-title {
+  font-size: 1.2rem;
+  margin-bottom: 16px;
+  color: #1976d2;
+}
+
+.appointment-card {
+  background: #f7f7f7;
+  padding: 16px;
+  margin-bottom: 12px;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.appointment-card p {
+  margin: 4px 0;
+  font-size: 14px;
+  color: #333;
+}
+
+.feedback-section {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.stars {
+  color: #ffc107;
+  font-size: 18px;
+}
+
+.feedback-comment {
+  margin-left: 8px;
+  color: #333;
+  font-size: 14px;
+}
+
+.no-feedback {
+  color: #888;
+  margin-top: 8px;
+  font-size: 14px;
+}
+
+/* ✅ Responsive tweaks */
+@media (max-width: 768px) {
+  .appointments-feedback {
+    margin-right: 0;
+    margin-top: 16px;
+  }
+
+  .appointment-card {
+    padding: 12px;
+  }
+
+  .appointments-title {
+    font-size: 1rem;
+    text-align: center;
+  }
+
+  .appointment-card p,
+  .feedback-comment {
+    font-size: 13px;
+  }
+
+  .stars {
+    font-size: 16px;
+  }
+}

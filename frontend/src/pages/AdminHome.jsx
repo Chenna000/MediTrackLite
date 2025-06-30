@@ -391,35 +391,26 @@ const AdminHome = () => {
                   </div>
                 </div>
               </div>
-              <div className="admin-stats-card">
-                <h4>Appointments Per Day</h4>
-                <div className="admin-bar-chart">
-                  {dailyStats.length === 0 ? (
-                    <div style={{ color: "#888" }}>No data</div>
-                  ) : (
-                    <div style={{ display: "flex", alignItems: "flex-end", height: 80, gap: 2 }}>
-                      {dailyStats.map((d, idx) => (
-                        <div key={idx} style={{ textAlign: "center", flex: 1 }}>
-                          <div
-                            style={{
-                              background: "#1976d2",
-                              height: `${Math.max(10, d.count * 10)}px`,
-                              width: 12,
-                              borderRadius: 4,
-                              margin: "0 auto",
-                              transition: "height 0.3s",
-                            }}
-                            title={`${d.date}: ${d.count}`}
-                          ></div>
-                          <div style={{ fontSize: 11, color: "#333", marginTop: 2 }}>
-                            {d.date.slice(5)}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
+              <div className="custom-bar-chart">
+  <h3 className="chart-title">Appointments Per Day</h3>
+  <div className="bar-area">
+    {dailyStats.length === 0 ? (
+      <div className="no-data">No data</div>
+    ) : (
+      dailyStats.map((d, idx) => (
+        <div key={idx} className="bar-wrapper">
+          <div
+            className="bar"
+            style={{ height: `${d.count * 10}px` }}
+            title={`${d.date}: ${d.count} appointments`}
+          ></div>
+          <span className="bar-label">{d.date.slice(5)}</span>
+        </div>
+      ))
+    )}
+  </div>
+</div>
+
             </div>
           </>
         )}
