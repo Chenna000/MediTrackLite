@@ -5,6 +5,7 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import AppointmentPayment from './AppointmentPayment';
+import Spinner from '../pages/Spinner'; // ⬅️ Adjust this based on your current file's location
 
 //import timeGridPlugin from '@fullcalendar/timegrid'
 import './../css/PatientHome.css';
@@ -37,6 +38,8 @@ const FeedbackForm = ({ appointmentId, onFeedbackSubmit }) => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [existingFeedback, setExistingFeedback] = useState(null);
+
+const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -71,6 +74,7 @@ const FeedbackForm = ({ appointmentId, onFeedbackSubmit }) => {
       setError('Please select a rating.');
       return;
     }
+    setFeedbackSubmitting(true);
     try {
       await API.post('/feedback', {
         appointmentId,
@@ -84,79 +88,106 @@ const FeedbackForm = ({ appointmentId, onFeedbackSubmit }) => {
     } catch {
       setError('Failed to submit feedback. Please try again.');
     }
+    setFeedbackSubmitting(false);
+
   };
 
   if (loading) return null;
 
-  if (submitted && existingFeedback) {
-    return (
-      <div style={{ color: '#4caf50', marginTop: 8 }}>
-        <div>
-          <strong>Feedback already submitted for this appointment:</strong>
-        </div>
-        <div style={{ margin: '6px 0' }}>
-          <span style={{ color: '#ffc107', fontSize: 18 }}>
-            {'★'.repeat(existingFeedback.rating)}
-            {'☆'.repeat(5 - existingFeedback.rating)}
-          </span>
-        </div>
-        <div>
-          {existingFeedback.comment ? (
-            <span>{existingFeedback.comment}</span>
-          ) : (
-            <span style={{ color: '#888' }}>(No comment)</span>
-          )}
-        </div>
-      </div>
-    );
-  }
-
+if (feedbackSubmitting) {
   return (
-    <form onSubmit={handleSubmit} style={{ marginTop: 12, marginBottom: 8, background: '#f7f7f7', padding: 12, borderRadius: 8 }}>
-      <div style={{ marginBottom: 8 }}>
-        <span style={{ marginRight: 8 }}>Rate your experience:</span>
-        {[1, 2, 3, 4, 5].map((num) => (
-          <span
-            key={num}
-            style={{
-              cursor: 'pointer',
-              color: rating >= num ? '#ffc107' : '#ccc',
-              fontSize: 22,
-              marginRight: 2,
-            }}
-            onClick={() => setRating(num)}
-            role="button"
-            aria-label={`Rate ${num}`}
-          >
-            ★
-          </span>
-        ))}
+    <div style={{ display: 'flex', justifyContent: 'center', marginTop: 12 }}>
+      <Spinner message="Submitting feedback..." />
+    </div>
+  );
+}
+
+if (submitted && existingFeedback) {
+  return (
+    <div style={{ color: '#4caf50', marginTop: 8 }}>
+      <div>
+        <strong>Feedback already submitted for this appointment:</strong>
+      </div>
+      <div style={{ margin: '6px 0' }}>
+        <span style={{ color: '#ffc107', fontSize: 18 }}>
+          {'★'.repeat(existingFeedback.rating)}
+          {'☆'.repeat(5 - existingFeedback.rating)}
+        </span>
       </div>
       <div>
-        <textarea
-          placeholder="Optional comment"
-          value={comment}
-          onChange={(e) => setComment(e.target.value)}
-          style={{ width: '100%', minHeight: 40, borderRadius: 4, border: '1px solid #ccc', marginBottom: 8 }}
-        />
+        {existingFeedback.comment ? (
+          <span>{existingFeedback.comment}</span>
+        ) : (
+          <span style={{ color: '#888' }}>(No comment)</span>
+        )}
       </div>
-      {error && <div style={{ color: 'red', marginBottom: 4 }}>{error}</div>}
-      {success && <div style={{ color: 'green', marginBottom: 4 }}>{success}</div>}
-      <button
-        type="submit"
-        style={{
-          background: '#1976d2',
-          color: '#fff',
-          border: 'none',
-          borderRadius: 4,
-          padding: '6px 18px',
-          cursor: 'pointer',
-        }}
-      >
-        Submit Feedback
-      </button>
-    </form>
+    </div>
   );
+}
+
+// ✅ The feedback form renders here if not submitting or already submitted
+return (
+  <form
+    onSubmit={handleSubmit}
+    style={{
+      marginTop: 12,
+      marginBottom: 8,
+      background: '#f7f7f7',
+      padding: 12,
+      borderRadius: 8,
+    }}
+  >
+    <div style={{ marginBottom: 8 }}>
+      <span style={{ marginRight: 8 }}>Rate your experience:</span>
+      {[1, 2, 3, 4, 5].map((num) => (
+        <span
+          key={num}
+          style={{
+            cursor: 'pointer',
+            color: rating >= num ? '#ffc107' : '#ccc',
+            fontSize: 22,
+            marginRight: 2,
+          }}
+          onClick={() => setRating(num)}
+          role="button"
+          aria-label={`Rate ${num}`}
+        >
+          ★
+        </span>
+      ))}
+    </div>
+    <div>
+      <textarea
+        placeholder="Optional comment"
+        value={comment}
+        onChange={(e) => setComment(e.target.value)}
+        style={{
+          width: '100%',
+          minHeight: 40,
+          borderRadius: 4,
+          border: '1px solid #ccc',
+          marginBottom: 8,
+        }}
+      />
+    </div>
+    {error && <div style={{ color: 'red', marginBottom: 4 }}>{error}</div>}
+    {success && <div style={{ color: 'green', marginBottom: 4 }}>{success}</div>}
+    <button
+      type="submit"
+      style={{
+        background: '#1976d2',
+        color: '#fff',
+        border: 'none',
+        borderRadius: 4,
+        padding: '6px 18px',
+        cursor: 'pointer',
+      }}
+    >
+      Submit Feedback
+    </button>
+  </form>
+);
+
 };
 
 // Timeline with visualization

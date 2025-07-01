@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import Spinner from '../pages/Spinner'; // ⬅️ Adjust this based on your current file's location
+
 //import timeGridPlugin from '@fullcalendar/timegrid';
 import './../css/DoctorHome.css';
 import '@fullcalendar/common/main.css';
@@ -46,6 +48,11 @@ const DoctorHome = () => {
   // Doctor analytics state
   const [doctorAnalytics, setDoctorAnalytics] = useState(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
+
+  const [statusUpdating, setStatusUpdating] = useState(false);
+const [prescriptionSubmitting, setPrescriptionSubmitting] = useState(false);
+
+
 
   const API = axios.create({
     baseURL: 'http://localhost:8080',
@@ -136,6 +143,7 @@ const DoctorHome = () => {
   };
 
   const handleStatus = async (id, status) => {
+    setStatusUpdating(true);
     try {
       await API.put(`/appointments/${id}/status`, null, { params: { status } });
       setToast(`Status updated to ${status}`);
@@ -143,6 +151,7 @@ const DoctorHome = () => {
     } catch {
       setToast('Error updating status');
     }
+    setStatusUpdating(false);
     setTimeout(() => setToast(''), 3000);
   };
 
@@ -203,6 +212,7 @@ const DoctorHome = () => {
       setPrescriptionError('All fields are required.');
       return;
     }
+    setPrescriptionSubmitting(true); 
 
     try {
       const formData = new FormData();
@@ -226,6 +236,8 @@ const DoctorHome = () => {
     } catch {
       setPrescriptionError('Failed to upload prescription.');
     }
+    setPrescriptionSubmitting(false); 
+
   };
 
   const addMedicineRow = () => {
@@ -559,6 +571,15 @@ const DoctorCalendarView = ({ appointments, onStatusUpdate }) => {
                   </button>
                 ))}
               </div>
+
+
+              {statusUpdating && (
+  <div style={{ display: 'flex', justifyContent: 'center', marginTop: 12 }}>
+    <Spinner message="Updating appointment status..." />
+  </div>
+)}
+
+
               <div className="appointments-list">
                 {appointments.filter(app => statusFilter === 'ALL' ? true : app.status === statusFilter).length === 0 ? (
                   <div style={{ color: '#888', margin: '24px 0', textAlign: 'center' }}>
@@ -715,6 +736,11 @@ const DoctorCalendarView = ({ appointments, onStatusUpdate }) => {
         <div className="modal-overlay" onClick={() => setShowPrescriptionForm(false)}>
           <div className="modal" onClick={e => e.stopPropagation()} style={{ maxHeight: '80vh', overflowY: 'auto' }}>
             <h3>Upload Prescription</h3>
+
+      {prescriptionSubmitting ? (
+        <Spinner message="Uploading prescription..." />
+      ) : (
+        <>
             {prescriptionError && <p className="error">{prescriptionError}</p>}
             {prescriptionSuccess && <p className="success">{prescriptionSuccess}</p>}
 
@@ -752,6 +778,8 @@ const DoctorCalendarView = ({ appointments, onStatusUpdate }) => {
 
               <button type="submit" className="submit-button">Submit</button>
             </form>
+            </>
+             )}
           </div>
         </div>
       )}
