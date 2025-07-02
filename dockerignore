@@ -1,9 +1,22 @@
+# Ignore Maven output
 target/
-.git/
-.gitignore
-README.md
-Dockerfile
-*.log
-*.md
-.env
 
+# Ignore Git
+.git
+.gitignore
+
+# Ignore logs and environment files
+*.log
+*.env
+
+# Ignore docs or other files
+*.md
+
+# Ignore frontend (optional, if backend only)
+frontend/
+
+# Ignore OS and IDE specific files
+*.DS_Store
+*.iml
+.idea/
+.vscode/

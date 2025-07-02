@@ -1,5 +1,5 @@
 # ---- Stage 1: Build Spring Boot App ----
-FROM maven:3.9.4-eclipse-temurin-17 AS build
+FROM maven:3.9.4-eclipse-temurin-21 AS build
 
 # Set working directory
 WORKDIR /app
@@ -11,7 +11,7 @@ COPY backend /app
 RUN mvn clean package -DskipTests
 
 # ---- Stage 2: Run Spring Boot App ----
-FROM eclipse-temurin:17-jdk
+FROM eclipse-temurin:21-jdk
 
 # Create working directory
 WORKDIR /app
