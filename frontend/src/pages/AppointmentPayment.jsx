@@ -31,7 +31,7 @@ const [successMessage, setSuccessMessage] = useState(""); // Final message
     setMessage("");
 
     try {
-      const res = await fetch("http://localhost:8080/api/payment/create-payment-intent", {
+      const res = await fetch("https://meditracklite-production.up.railway.app/api/payment/create-payment-intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ amount: 10000 }) // ₹100

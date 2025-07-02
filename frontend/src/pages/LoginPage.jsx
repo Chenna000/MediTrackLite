@@ -58,11 +58,11 @@ const LoginPage = () => {
     }
 
     try {
-      await axios.post('http://localhost:8080/api/auth/login',
+      await axios.post('https://meditracklite-production.up.railway.app/api/auth/login',
         { email, password },
         { withCredentials: true });
 
-      const res = await axios.get('http://localhost:8080/api/auth/profile', {
+      const res = await axios.get('https://meditracklite-production.up.railway.app/api/auth/profile', {
         withCredentials: true,
       });
 
@@ -93,7 +93,7 @@ const LoginPage = () => {
     }
     setFpLoading(true);
     try {
-      await axios.post('http://localhost:8080/auth/forgot-password', {
+      await axios.post('https://meditracklite-production.up.railway.app/auth/forgot-password', {
         email: fpEmail,
         backupEmail: fpBackup,
       });
@@ -113,7 +113,7 @@ const LoginPage = () => {
     }
     setFpLoading(true);
     try {
-      await axios.post('http://localhost:8080/auth/verify-otp', {
+      await axios.post('https://meditracklite-production.up.railway.app/auth/verify-otp', {
         email: fpEmail,
         otp: fpOtp,
       });
@@ -137,7 +137,7 @@ const LoginPage = () => {
     }
     setFpLoading(true);
     try {
-      await axios.post('http://localhost:8080/auth/reset-password', {
+      await axios.post('https://meditracklite-production.up.railway.app/auth/reset-password', {
         email: fpEmail,
         newPassword: fpNewPass,
       });

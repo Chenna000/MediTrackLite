@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import "./../css/AdminHome.css";
 
 const API = axios.create({
-  baseURL: "http://localhost:8080",
+  baseURL: "https://meditracklite-production.up.railway.app",
   withCredentials: true,
 });
 

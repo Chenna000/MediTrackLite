@@ -55,12 +55,12 @@ const [prescriptionSubmitting, setPrescriptionSubmitting] = useState(false);
 
 
   const API = axios.create({
-    baseURL: 'http://localhost:8080',
+    baseURL: 'https://meditracklite-production.up.railway.app',
     withCredentials: true,
   });
 
   const ANALYTICS_API = axios.create({
-    baseURL: 'http://localhost:8080/analytics',
+    baseURL: 'https://meditracklite-production.up.railway.app/analytics',
     withCredentials: true,
   });
   const timeoutRef = useRef(null);
@@ -382,7 +382,7 @@ const DoctorCalendarView = ({ appointments, onStatusUpdate }) => {
                   className="report-download-btn"
                   style={{ backgroundColor: '#3f51b5', marginLeft: '10px' }}
                   onClick={() =>
-                    window.open(`http://localhost:8080/files/download/${encodeURIComponent(selectedEvent.prescriptionPath)}`, '_blank')
+                    window.open(`https://meditracklite-production.up.railway.app/files/download/${encodeURIComponent(selectedEvent.prescriptionPath)}`, '_blank')
                   }
                 >
                   💊 Download Prescription

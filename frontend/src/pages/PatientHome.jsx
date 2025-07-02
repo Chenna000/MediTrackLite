@@ -12,12 +12,12 @@ import './../css/PatientHome.css';
 import '@fullcalendar/common/main.css'; // Only FullCalendar CSS needed for v6+
 
 const API = axios.create({
-  baseURL: 'http://localhost:8080',
+  baseURL: 'https://meditracklite-production.up.railway.app',
   withCredentials: true,
 });
 
 const ANALYTICS_API = axios.create({
-  baseURL: 'http://localhost:8080/analytics',
+  baseURL: 'https://meditracklite-production.up.railway.app/analytics',
   withCredentials: true,
 });
 
