@@ -25,7 +25,7 @@ import com.meditrack.backend.service.AppointmentService;
 
 @RestController
 @RequestMapping("/appointments")
-@CrossOrigin(origins="http://localhost:5173")
+@CrossOrigin(origins="https://meditrack-frontend-p0sd.onrender.com")
 public class AppointmentController {
 	
 	@Autowired

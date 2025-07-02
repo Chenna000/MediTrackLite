@@ -15,7 +15,7 @@ import com.meditrack.backend.service.ForgotPasswordService;
 
 @RestController
 @RequestMapping("/auth")
-@CrossOrigin(origins = "http:localhost:5173")
+@CrossOrigin(origins = "https://meditrack-frontend-p0sd.onrender.com")
 public class ForgotPasswordController {
 	
 	@Autowired

@@ -23,7 +23,7 @@ import com.meditrack.backend.service.AdminService;
 
 @RestController
 @RequestMapping("/admin")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "https://meditrack-frontend-p0sd.onrender.com")
 public class AdminController {
 	
 	 @Autowired 

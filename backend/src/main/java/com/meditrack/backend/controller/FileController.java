@@ -15,7 +15,7 @@ import com.meditrack.backend.service.FileStorageService;
 
 @RestController
 @RequestMapping("/files")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "https://meditrack-frontend-p0sd.onrender.com")
 public class FileController {
 
     @Autowired

@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "http:localhost:5173")
+@CrossOrigin(origins = "https://meditrack-frontend-p0sd.onrender.com")
 public class AuthController {
 
     @Autowired

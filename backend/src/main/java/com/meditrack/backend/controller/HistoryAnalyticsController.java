@@ -12,7 +12,7 @@ import com.meditrack.backend.service.HistoryAnalyticsService;
 
 @RestController
 @RequestMapping("/analytics")
-@CrossOrigin(origins="http://localhost:5173")
+@CrossOrigin(origins="https://meditrack-frontend-p0sd.onrender.com")
 public class HistoryAnalyticsController {
 	
 	@Autowired
