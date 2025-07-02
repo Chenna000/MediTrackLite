@@ -268,18 +268,6 @@ const Timeline = ({ email }) => {
               <div style={{ marginBottom: 6 }}>
                 <strong>Status:</strong> <span style={{ color: entry.status === 'COMPLETED' ? '#43a047' : '#1976d2' }}>{entry.status}</span>
               </div>
-              {entry.report && (
-                <div style={{ marginBottom: 6 }}>
-                  <a
-                    href={`http://localhost:8080/files/download/${encodeURIComponent(entry.report)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ color: '#1976d2', textDecoration: 'underline' }}
-                  >
-                    Download Report
-                  </a>
-                </div>
-              )}
               {entry.prescriptions && entry.prescriptions.length > 0 && (
                 <div style={{ marginTop: 8 }}>
                   <strong>Prescriptions:</strong>
@@ -296,6 +284,25 @@ const Timeline = ({ email }) => {
                             Notes: {pres.consultationNotes}
                           </div>
                         )}
+                        {pres.labReportsPath && pres.labReportsPath.trim() !== '' ? (
+                          <div style={{ marginTop: 4 }}>
+                            <button
+                              style={{
+                                background: '#607d8b',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: 4,
+                                padding: '4px 12px',
+                                cursor: 'pointer'
+                              }}
+                              onClick={() =>
+                                window.open(pres.labReportsPath, '_blank')
+                              }
+                            >
+                              Download Lab Report
+                            </button>
+                          </div>
+                        ) : null}
                       </li>
                     ))}
                   </ul>
@@ -697,11 +704,46 @@ const PatientHome = () => {
     appt.status === selectedStatus
   );
 
-  const handleDownloadReport = (patientReportPath) => {
-    if (!patientReportPath) return;
-    window.open(`http://localhost:8080/files/download/${encodeURIComponent(patientReportPath)}`, '_blank');
-  };
 
+  function PrescriptionLabReportButton({ appointmentId }) {
+  const [loading, setLoading] = useState(false);
+  const [hasReport, setHasReport] = useState(false);
+  const [reportUrl, setReportUrl] = useState('');
+
+  useEffect(() => {
+    let mounted = true;
+    setHasReport(false);
+    setReportUrl('');
+    if (!appointmentId) return;
+    setLoading(true);
+    API.get(`/prescriptions/${appointmentId}`)
+      .then(res => {
+        if (mounted && Array.isArray(res.data)) {
+          const found = res.data.find(
+            pres => pres.labReportsPath && pres.labReportsPath.trim() !== ''
+          );
+          if (found) {
+            setHasReport(true);
+            setReportUrl(found.labReportsPath);
+          }
+        }
+      })
+      .finally(() => mounted && setLoading(false));
+    return () => { mounted = false; };
+  }, [appointmentId]);
+
+  if (loading) return <span style={{ color: '#1976d2', marginRight: 8 }}>Checking report...</span>;
+  if (!hasReport) return null;
+
+  return (
+    <button
+      style={{ marginRight: 8, backgroundColor: '#607d8b', color: 'white' }}
+      onClick={() => window.open(reportUrl, '_blank')}
+    >
+      Download Lab Report
+    </button>
+  );
+}
   const completedAppointments = appointments.filter(a => a.status === 'COMPLETED');
   const feedbackedAppointments = completedAppointments.filter(a => feedbackMap[a.id]);
   const notFeedbackedAppointments = completedAppointments.filter(a => !feedbackMap[a.id]);
@@ -893,14 +935,7 @@ const PatientHome = () => {
                             <p><strong>Time:</strong> {appt.slot}</p>
                             <p><strong>Doctor:</strong> {appt.doctorName}</p>
                             <p><strong>Status:</strong> {appt.status}</p>
-                            {appt.patientReportPath && (
-                              <button
-                                style={{ marginRight: 8, backgroundColor: '#607d8b', color: 'white' }}
-                                onClick={() => handleDownloadReport(appt.patientReportPath)}
-                              >
-                                Download Lab Report
-                              </button>
-                            )}
+                            <PrescriptionLabReportButton appointmentId={appt.id} />
                             <button onClick={() => navigate(`/print/${appt.id}`)}> View & Print</button>
                             <div style={{ marginTop: 8 }}>
                               <strong>Feedback:</strong>
@@ -929,14 +964,7 @@ const PatientHome = () => {
                             <p><strong>Time:</strong> {appt.slot}</p>
                             <p><strong>Doctor:</strong> {appt.doctorName}</p>
                             <p><strong>Status:</strong> {appt.status}</p>
-                            {appt.patientReportPath && (
-                              <button
-                                style={{ marginRight: 8, backgroundColor: '#607d8b', color: 'white' }}
-                                onClick={() => handleDownloadReport(appt.patientReportPath)}
-                              >
-                                Download Lab Report
-                              </button>
-                            )}
+                            <PrescriptionLabReportButton appointmentId={appt.id} />
                             <button onClick={() => navigate(`/print/${appt.id}`)}> View & Print</button>
                             <FeedbackForm appointmentId={appt.id} onFeedbackSubmit={() => fetchAppointments(user.email)} />
                           </li>
@@ -960,14 +988,7 @@ const PatientHome = () => {
                       <p><strong>Time:</strong> {appt.slot}</p>
                       <p><strong>Doctor:</strong> {appt.doctorName}</p>
                       <p><strong>Status:</strong> {appt.status}</p>
-                      {appt.status === 'COMPLETED' && appt.patientReportPath && (
-                        <button
-                          style={{ marginRight: 8, backgroundColor: '#607d8b', color: 'white' }}
-                          onClick={() => handleDownloadReport(appt.patientReportPath)}
-                        >
-                          Download Lab Report
-                        </button>
-                      )}
+                      <PrescriptionLabReportButton appointmentId={appt.id} />
                       <button onClick={() => navigate(`/print/${appt.id}`)}> View & Print</button>
                       {appt.status === 'COMPLETED' && (
                         <FeedbackForm appointmentId={appt.id} onFeedbackSubmit={() => fetchAppointments(user.email)} />

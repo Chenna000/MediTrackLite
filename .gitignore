@@ -19,6 +19,7 @@ backend/target/
 backend/.env
 backend/.mvn/wrapper/maven-wrapper.jar
 backend/uploads/
+backend/src/main/resources/meditracklite-464613-ffd95e89739e.json
 # Exclude Maven wrapper jar file
 backend/.mvn/wrapper/maven-wrapper.properties
 

@@ -278,7 +278,7 @@ const [prescriptionSubmitting, setPrescriptionSubmitting] = useState(false);
   // Download report handler for completed appointments
   const handleDownloadReport = (labReportsPath) => {
     if (!labReportsPath) return;
-    window.open(`http://localhost:8080/files/download/${encodeURIComponent(labReportsPath)}`, '_blank');
+    window.open(labReportsPath, '_blank');
   };
 
   // Filter completed appointments for feedback display
@@ -371,10 +371,10 @@ const DoctorCalendarView = ({ appointments, onStatusUpdate }) => {
                 <button
                   className="report-download-btn"
                   onClick={() =>
-                    window.open(`http://localhost:8080/files/download/${encodeURIComponent(selectedEvent.patientReportPath)}`, '_blank')
+                    window.open(selectedEvent.patientReportPath, '_blank')
                   }
                 >
-                  📥 Download Lab Report
+                  📄 Download Patient Report
                 </button>
               )}
               {selectedEvent.status === 'COMPLETED' && selectedEvent.prescriptionPath && (

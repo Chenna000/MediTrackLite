@@ -1,67 +1,101 @@
 package com.meditrack.backend.service;
 
-
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
+import com.google.api.services.drive.Drive;
+import com.google.api.services.drive.model.File;
+import com.google.api.services.drive.model.Permission;
+import com.google.auth.http.HttpCredentialsAdapter;
+import com.google.auth.oauth2.GoogleCredentials;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import com.google.api.client.http.HttpRequestInitializer;
+import com.google.api.client.http.HttpTransport;
+import java.io.InputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.file.*;
-
+import java.util.Collections;
+import java.util.UUID;
+import java.util.Base64;
 
 @Service
 public class FileStorageService {
-	
-	private final Path rootLocation = Paths.get("uploads");
+
+    private final Drive driveService;
+
+    
 
     public FileStorageService() {
         try {
-            Files.createDirectories(rootLocation);
-        } catch (IOException e) {
-            throw new RuntimeException("Could not initialize upload directory!", e);
+            String credentialsBase64 = System.getenv("GOOGLE_CREDENTIALS_BASE64");
+
+            if (credentialsBase64 == null || credentialsBase64.isEmpty()) {
+                throw new RuntimeException("Missing GOOGLE_CREDENTIALS_BASE64 environment variable.");
+            }
+
+            byte[] decodedBytes = Base64.getDecoder().decode(credentialsBase64);
+            InputStream credentialsStream = new ByteArrayInputStream(decodedBytes);
+
+            GoogleCredentials credentials = GoogleCredentials.fromStream(credentialsStream)
+                    .createScoped(Collections.singleton("https://www.googleapis.com/auth/drive.file"));
+
+            HttpRequestInitializer requestInitializer = new HttpCredentialsAdapter(credentials);
+            HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
+
+            this.driveService = new Drive.Builder(httpTransport, GsonFactory.getDefaultInstance(), requestInitializer)
+                    .setApplicationName("MediTrackLite")
+                    .build();
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to initialize Google Drive service", e);
         }
     }
+
 
     public String saveFile(MultipartFile file) {
-        if (file.isEmpty()) {
-            throw new RuntimeException("Cannot save empty file.");
-        }
-
-        String filename = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-
         try {
-            Path destinationFile = this.rootLocation.resolve(
-                    Paths.get(filename))
-                    .normalize()
-                    .toAbsolutePath();
+            // Create Google Drive file metadata
+            File fileMetadata = new File();
+            String uniqueFilename = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
+            fileMetadata.setName(uniqueFilename);
+            fileMetadata.setParents(Collections.singletonList("1BCUB384iZnOsYG-SoZUJ1zFAZjvfaGcS"));
 
-            if (!destinationFile.getParent().equals(this.rootLocation.toAbsolutePath())) {
-                throw new RuntimeException("Cannot store file outside current directory.");
-            }
+            // Upload the file to Drive
+            File uploadedFile = driveService.files().create(fileMetadata,
+                    new com.google.api.client.http.InputStreamContent(
+                            file.getContentType(),
+                            file.getInputStream()
+                    ))
+                    .setFields("id, webViewLink, webContentLink")
+                    .execute();
 
-            Files.copy(file.getInputStream(), destinationFile, StandardCopyOption.REPLACE_EXISTING);
+            // Make the file public (anyone with the link can view/download)
+            Permission permission = new Permission()
+                    .setType("anyone")
+                    .setRole("reader");
+            driveService.permissions().create(uploadedFile.getId(), permission).execute();
 
-            return filename;
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to store file.", e);
-        }
-    }
+            // Return the web content link (direct download)
+            return uploadedFile.getWebContentLink();
 
-    public Path loadFile(String filename) {
-        return rootLocation.resolve(filename);
-    }
-
-    public Resource loadAsResource(String filename) {
-        try {
-            Path file = loadFile(filename);
-            Resource resource = new  UrlResource(file.toUri());
-            if (resource.exists() || resource.isReadable()) {
-                return resource;
-            } else {
-                throw new RuntimeException("Could not read the file.");
-            }
         } catch (Exception e) {
-            throw new RuntimeException("Failed to load file.", e);
+            throw new RuntimeException("File upload to Google Drive failed", e);
+        }
+    }
+
+    public String getFileUrl(String driveUrl) {
+        return driveUrl;
+    }
+    
+    public byte[] downloadFile(String fileId) {
+        try {
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            driveService.files().get(fileId)
+                    .executeMediaAndDownloadTo(outputStream);
+            return outputStream.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to download file from Google Drive", e);
         }
     }
 

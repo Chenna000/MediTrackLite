@@ -6,15 +6,28 @@ public class PrescriptionDto {
 	 private String dosageInstructions;
 	 private String frequency;
 	 private String consultationNotes;
+	 private String labReportsPath;
 	 
 	 public PrescriptionDto(Prescription p) {
 	        this.medicineName = p.getMedicineName();
 	        this.dosageInstructions = p.getDosageInstructions();
 	        this.frequency = p.getFrequency();
 	        this.consultationNotes = p.getConsultationNotes();
+	        this.labReportsPath = p.getLabReportsPath();
 	    }
-
 	 
+
+
+	public String getLabReportsPath() {
+		return labReportsPath;
+	}
+
+
+	public void setLabReportsPath(String labReportsPath) {
+		this.labReportsPath = labReportsPath;
+	}
+
+
 	public String getConsultationNotes() {
 		return consultationNotes;
 	}
