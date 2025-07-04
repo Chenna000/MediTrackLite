@@ -2,14 +2,22 @@
 
 MediTrack is a full-stack medical appointment management application designed to simplify the process of scheduling and managing doctor appointments. Built using **Spring Boot (backend)** and **React (frontend)**, the system supports role-based access for **Patients** and **Doctors**,  and appointment printing.
 
-This project was built using **React (Vite)** for the frontend and **Spring Boot** for the backend. 
+## 📌 Project Description
+
+MediTrackLite serves as a lightweight but powerful healthcare portal where:
+
+- **Patients** can register, book appointments, upload reports, and access medical history.
+- **Doctors** can manage appointments, update statuses, write prescriptions, and access analytics.
+- **Admins** can monitor platform activity, manage users, and view system-wide reports.
+
+This application supports role-based authentication and secure data handling to ensure privacy and efficiency in medical workflows. Deployed on **Render(Frontend), Railways(Backend)**. 
+### Checkout MediTrackLite "https://meditrack-frontend-p0sd.onrender.com/"
 
 ##  Tech Stack
 
 ### Frontend (React + Vite)
 - React Router for navigation
 - Axios for API calls
-- Role-based redirection
 - JavaScript
 - VS Code as IDE
 
@@ -17,13 +25,20 @@ This project was built using **React (Vite)** for the frontend and **Spring Boot
 - Spring Security for authentication and role-based access
 - Spring Data JPA for database access
 - BCrypt for password hashing
-- Validation using annotations
 - Java Mail Sender for email based notifications
-- REST APIs
-- Eclipse IDE
+- Eclipse as IDE
+
+## Requirements
+- Java 21
+- Maven
+- MySQL 8+
+- Node.js + npm
 
 ### Database
-- MYSQL
+- MYSQL(Railway)
+
+### Cloud Services
+- Google Drive (file storage)
 
 ## 🔑 Key Features
 
@@ -100,21 +115,53 @@ This project was built using **React (Vite)** for the frontend and **Spring Boot
     - frontend/ (React+Vite App)
     
 
-##  How to Run the Project
+##  Quick Setup
+Follow these steps to run the project locally on your system
+### Steps 
+  1. **Clone the Repository**
+    ```git clone https://github.com/Sankar1217/MediTrackLite.git```
 
-### Backend (Spring Boot)
-
+#### Backend (Spring Boot)
 1. Open the backend folder in Eclipse
-2. Run the Spring Boot application
-3. It will start on: "http://localhost:8080"
+2. Configure application.properties
+   - spring.datasource.url=jdbc:mysql://localhost:3306/meditrackdb
+   - spring.datasource.username=root
+   - spring.datasource.password=your_password
+   - configure .env file
+3. Run the Spring Boot application
+   - cd MediTrackLite/backend
+   - mvn clean install
+   - mvn spring-boot:run
+4. It will start on: "http://localhost:8080"
 
-### Frontend (React + Vite)
+#### Frontend (React + Vite)
 
 1. Open the frontend folder in VS Code
-2. Run these commands in Terminal:
+2. cd MediTrackLite/frontend
+3. Run these commands in Terminal:
    - npm install
    - npm run dev
-3. It will start on: "http://localhost:5173"
+4. It will start on: "http://localhost:5173"
+
+###  Implemented Workflows
+1. `Appointment Booking`
+    - Only allows booking if doctor is available
+    - Prevents race conditions during acceptance
+2. `Prescription Handling`
+   -  Multiple medicines per appointment
+   -  Doctors enter prescription upon completion
+   -  Patients can view and download after appointment
+3. `File Uploads`
+    - Patients upload past reports during booking
+    - Doctors can upload lab requests after consultation
+    - Stored on Google Drive with link sharing
+4. `Feedback Flow`
+    - Feedback allowed once per completed appointment
+    - Doctors see feedback with average rating
+5. `Admin Management`
+    - Admin can monitor usage
+    - User approval/deactivation
+    - Secure delete with cascade cleanup
    
 ###  Sample API Endpoints
 - POST `/api/auth/register` – Register user
@@ -126,18 +173,20 @@ This project was built using **React (Vite)** for the frontend and **Spring Boot
 - POST `/prescriptions/upload` - Adds Prescription Details
 - GET `/prescriptions/{appointmentId}` - Returns Prescription details based on appointmentId
 
+###  Known Bugs and Limitations
+- OTP delivery may fail occasionally due to JavaMailsender issues.
+- File previews not supported, only download via Google Drive link.
+- Timezone issues may appear in calendar view (FullCalendar) — ensure local time settings are correct.
+-  No real-time updates (like WebSocket) — manual refresh needed in some views.
+-  Analytics dashboard is basic, further metrics can be added.
+-  Limited to few users as deployed on railway free tier.
+
  ## Future Enhancements
 - Integreate Real time notifications to mobile number
 - JWT-based token authentication
 - Mobile app with React Native
 - Invoice Generation
 - Multi-language Support
-
-## Requirements
-- Java 17+
-- Maven
-- MySQL 8+
-- Node.js + npm
   
 ##  What I Learned
 - Implementing secure role-based authentication
