@@ -29,6 +29,7 @@ CREATE TABLE `appointments` (
     `slot` VARCHAR(255) DEFAULT NULL,                        
     `status` VARCHAR(255) DEFAULT NULL,                      -- Appointment status (PENDING, ACCEPTED, REJECTED,IN_PROGRESS,COMPLETED)
     `patient_report_path` varchar(255) DEFAULT NULL,
+    `version` int DEFAULT NULL,
     PRIMARY KEY (`id`)
 );
 
