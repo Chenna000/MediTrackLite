@@ -55,7 +55,8 @@ This application supports role-based authentication and secure data handling to 
 - View booked appointments in reverse chronological order 
 - Print appointment confirmation
 - See prescription after appointment is completed and provide feedback
-- Optionally upload medical reports for easier consultation 
+- Optionally upload medical reports for easier consultation
+- Added Live chat feature
 
 ### 👨‍⚕️ Doctor Module
 - View appointments split into **Pending** and **Accepted**
