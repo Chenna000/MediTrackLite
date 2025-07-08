@@ -18,7 +18,7 @@ import com.meditrack.backend.service.FeedbackService;
 
 @RestController
 @RequestMapping("/feedback")
-@CrossOrigin(origins="https://meditrack-frontend-p0sd.onrender.com")
+@CrossOrigin(origins = { "http://localhost:5173", "https://meditrack-frontend-p0sd.onrender.com"})
 public class FeedbackController {
 	
 	@Autowired

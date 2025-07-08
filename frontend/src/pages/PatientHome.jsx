@@ -5,7 +5,8 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import AppointmentPayment from './AppointmentPayment';
-import Spinner from '../pages/Spinner'; // ⬅️ Adjust this based on your current file's location
+import Spinner from '../pages/Spinner'; 
+import PrivateChat from '../pages/PrivateChat';
 
 //import timeGridPlugin from '@fullcalendar/timegrid'
 import './../css/PatientHome.css';
@@ -15,7 +16,10 @@ const API = axios.create({
   baseURL: 'https://meditracklite-production.up.railway.app',
   withCredentials: true,
 });
-
+const RATING_API = axios.create({
+  baseURL:'https://meditracklite-production.up.railway.app/feedback',
+  withCredentials: true,
+})
 const ANALYTICS_API = axios.create({
   baseURL: 'https://meditracklite-production.up.railway.app/analytics',
   withCredentials: true,
@@ -436,7 +440,7 @@ const PatientHome = () => {
   const [completedTab, setCompletedTab] = useState('feedbacked');
   const [showTimeline, setShowTimeline] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
-
+const [chatDoctor, setChatDoctor] = useState(null); 
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   let timeout;
@@ -541,7 +545,21 @@ const PatientHome = () => {
     API.get('/appointments/doctorsdata', {
       params: { specialization: selectedSpecialization, date },
     })
-      .then((res) => setDoctors(res.data))
+      .then( async (res) => {
+        const fetchedDoctors= res.data;
+        const doctorsWithRatings = await Promise.all(
+        fetchedDoctors.map(async (doc) => {
+          try {
+            const ratingRes = await RATING_API.get('/doctor/average', {
+              params: { email: doc.email },
+            });
+            return { ...doc, averageRating: ratingRes.data };
+          } catch (err) {
+            return { ...doc, averageRating: null };
+          }
+        })
+      );
+        setDoctors(doctorsWithRatings)})
       .catch(() => setDoctors([]));
     setBookForm((prev) => ({
       ...prev,
@@ -813,7 +831,9 @@ const PatientHome = () => {
                 >
                   <option value="">--Select--</option>
                   {doctors.map((doc) => (
-                    <option key={doc.email} value={doc.email}>{doc.name}</option>
+                    <option key={doc.email} value={doc.email}>{doc.name}
+                    {doc.averageRating !='0.0'? `(⭐${doc.averageRating.toFixed(1)})`: '(No Rating)'}
+                    </option>
                   ))}
                 </select>
               </label>
@@ -988,6 +1008,18 @@ const PatientHome = () => {
                       <p><strong>Time:</strong> {appt.slot}</p>
                       <p><strong>Doctor:</strong> {appt.doctorName}</p>
                       <p><strong>Status:</strong> {appt.status}</p>
+                      <button 
+                        style={{
+                          margin: '8px 8px 0 0',
+                          background: '#1976d2',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: 4,
+                          padding: '4px 12px',
+                          cursor: 'pointer'
+                        }} onClick={() => setChatDoctor(appt.doctorEmail)}>
+                          Chat With Doctor
+                        </button>
                       <PrescriptionLabReportButton appointmentId={appt.id} />
                       <button onClick={() => navigate(`/print/${appt.id}`)}> View & Print</button>
                       {appt.status === 'COMPLETED' && (
@@ -1044,6 +1076,17 @@ const PatientHome = () => {
           </div>
         </div>
       )}
+      {chatDoctor && (
+          <div className="modal-overlay" onClick={() => setChatDoctor(null)}>
+            <div className="modal-container" onClick={e => e.stopPropagation()}>
+              <button className="modal-close-btn" onClick={() => setChatDoctor(null)}>&times;</button>
+              <PrivateChat
+                username={user?.email}
+                peer={chatDoctor}
+              />
+            </div>
+          </div>
+        )}
     </div>
   );
 };

@@ -37,7 +37,7 @@ public class WebSecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("https://meditrack-frontend-p0sd.onrender.com")); 
+        config.setAllowedOrigins(List.of("https://meditrack-frontend-p0sd.onrender.com","http://localhost:5173")); 
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true); //  Important for sending session cookies

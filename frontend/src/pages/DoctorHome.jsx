@@ -4,7 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import Spinner from '../pages/Spinner'; // ⬅️ Adjust this based on your current file's location
+import Spinner from '../pages/Spinner'; 
+import PrivateChat from '../pages/PrivateChat'; 
 
 //import timeGridPlugin from '@fullcalendar/timegrid';
 import './../css/DoctorHome.css';
@@ -51,6 +52,7 @@ const DoctorHome = () => {
 
   const [statusUpdating, setStatusUpdating] = useState(false);
 const [prescriptionSubmitting, setPrescriptionSubmitting] = useState(false);
+const [chatPatient, setChatPatient] = useState(null); 
 
 
 
@@ -592,6 +594,20 @@ const DoctorCalendarView = ({ appointments, onStatusUpdate }) => {
                       <p><strong>Date:</strong> {app.appointmentDate}</p>
                       <p><strong>Time:</strong> {app.slot}</p>
                       <p><strong>Issue:</strong> {app.problemDescription}</p>
+                      <button
+                        style={{
+                          margin: '8px 8px 0 0',
+                          background: '#1976d2',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: 4,
+                          padding: '4px 12px',
+                          cursor: 'pointer'
+                        }}
+                        onClick={() => setChatPatient(app.patientEmail)}
+                      >
+                        Chat with Patient
+                      </button>
                       {app.status === 'PENDING' && app.patientReportPath && (
                         <button
                           style={{ marginBottom: 8, backgroundColor: '#607d8b', color: 'white' }}
@@ -811,7 +827,17 @@ const DoctorCalendarView = ({ appointments, onStatusUpdate }) => {
           </div>
         </div>
       )}
-
+          {chatPatient && (
+        <div className="modal-overlay" onClick={() => setChatPatient(null)}>
+          <div className="modal-container" onClick={e => e.stopPropagation()}>
+            <button className="modal-close-btn" onClick={() => setChatPatient(null)}>&times;</button>
+            <PrivateChat
+              username={user?.email}
+              peer={chatPatient}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

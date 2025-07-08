@@ -14,6 +14,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+
 import com.meditrack.backend.model.Appointment;
 import com.meditrack.backend.model.AppointmentRequest;
 import com.meditrack.backend.model.User;
@@ -36,7 +37,7 @@ public class AppointmentService {
     
     @Autowired
     private EmailService emailService;
-  
+    
 
     private static final List<String> ALL_SLOTS = List.of(
         "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM",
@@ -368,4 +369,6 @@ public class AppointmentService {
 	        
 	        emailService.sendEmail(backupEmail, subject, body);
 	    }
+	
+	
 }

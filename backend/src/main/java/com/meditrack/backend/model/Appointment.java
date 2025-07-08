@@ -30,8 +30,6 @@ public class Appointment {
 	private String patientReportPath;
 	@Version
     private Integer version;
-	
-	
 	public Integer getVersion() {
 		return version;
 	}

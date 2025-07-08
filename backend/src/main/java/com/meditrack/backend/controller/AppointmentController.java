@@ -18,14 +18,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-
 import com.meditrack.backend.model.Appointment;
 import com.meditrack.backend.model.AppointmentRequest;
 import com.meditrack.backend.service.AppointmentService;
 
 @RestController
 @RequestMapping("/appointments")
-@CrossOrigin(origins="https://meditrack-frontend-p0sd.onrender.com")
+@CrossOrigin(origins = { "http://localhost:5173", "https://meditrack-frontend-p0sd.onrender.com"})
 public class AppointmentController {
 	
 	@Autowired
@@ -99,4 +98,5 @@ public class AppointmentController {
         List<Map<String, String>> availableDoctors = appointmentService.getAvailableDoctorsBySpecialization(specialization, LocalDate.parse(date));
         return ResponseEntity.ok(availableDoctors);
     }
+    
 }

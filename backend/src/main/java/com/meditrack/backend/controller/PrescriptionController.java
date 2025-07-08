@@ -20,7 +20,7 @@ import com.meditrack.backend.service.PrescriptionService;
 
 @RestController
 @RequestMapping("/prescriptions")
-@CrossOrigin(origins="https://meditrack-frontend-p0sd.onrender.com")
+@CrossOrigin(origins = { "http://localhost:5173", "https://meditrack-frontend-p0sd.onrender.com"})
 public class PrescriptionController {
 
 	 @Autowired

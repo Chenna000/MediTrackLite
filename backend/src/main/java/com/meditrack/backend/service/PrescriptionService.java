@@ -54,9 +54,8 @@ public class PrescriptionService {
 	    }
 
 	    public List<PrescriptionDto> getPrescriptionByAppointmentId(Long appointmentId) {
-	    	System.out.println(prescriptionRepo.findByAppointmentId(appointmentId).getFirst());
 	    	List<Prescription> prescriptions = prescriptionRepo.findByAppointmentId(appointmentId);
-	    	
+	    	if(prescriptions.isEmpty()) {return null;}
 	    	 List<PrescriptionDto> dtoList = prescriptions.stream()
 	    	            .map(PrescriptionDto::new)
 	    	            .collect(Collectors.toList());
